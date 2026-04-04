@@ -46,7 +46,7 @@ async function getInitialData() {
   const livrosUrl = `${DIRECTUS_URL}/items/biblioteca`
     + `?fields=id,isbn,titulo,autor,editora,capa_url,data_publicacao`
     + `&sort=-data_publicacao`
-    + `&limit=500&page=1&meta=total_count`
+    + `&limit=500&page=1&meta=filter_count`
     + `&filter=${encodeURIComponent(JSON.stringify(filtroInicial))}`
 
   const livrosRes  = await fetch(livrosUrl, { cache: 'no-store' })
@@ -54,7 +54,7 @@ async function getInitialData() {
 
   return {
     livros: (livrosJson.data ?? []) as Livro[],
-    totalCount: livrosJson.meta?.total_count ?? 0,
+    totalCount: livrosJson.meta?.filter_count ?? 0,
     selos,
     editorasAtivas,
     dataFrom,

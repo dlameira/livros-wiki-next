@@ -97,13 +97,13 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
     const url = `${DIRECTUS_URL}/items/biblioteca`
       + `?fields=id,isbn,titulo,autor,editora,capa_url,data_publicacao`
-      + `&sort=${sort}&limit=${PAGE_LIMIT}&page=${page}&meta=total_count`
+      + `&sort=${sort}&limit=${PAGE_LIMIT}&page=${page}&meta=filter_count`
       + `&filter=${encodeURIComponent(JSON.stringify(filter))}`
 
     try {
       const res  = await fetch(url)
       const json = await res.json()
-      const tc   = json.meta?.total_count ?? 0
+      const tc   = json.meta?.filter_count ?? 0
       setTotal(tc)
 
       const novos: Livro[] = (json.data ?? []).filter((l: Livro) => {
@@ -157,7 +157,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     if (from) { setDateFrom(from); setFromMonth(from.getMonth()); setFromYear(from.getFullYear()) }
     if (to)   { setDateTo(to);     setToMonth(to.getMonth());     setToYear(to.getFullYear()) }
     if (!from) { setDateFrom(new Date(1980, 0, 1)); setFromMonth(0); setFromYear(1980) }
-    if (!to)   { setDateTo(new Date(hoje.getFullYear() + 2, 11, 31)) }
+    if (!to)   { setDateTo(new Date(hoje.getFullYear() + 2, 11, 31)); setToMonth(11); setToYear(hoje.getFullYear() + 2) }
   }
 
   function onDateChange(fM: number, fY: number, tM: number, tY: number) {
