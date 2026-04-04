@@ -7,6 +7,35 @@ const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'https://directus-p
 const PAGE_LIMIT = 500
 const MONTHS_PT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
 
+const CONTRIBUTOR_TYPES: Record<string, string> = {
+  A01: 'autor', A12: 'ilustrador', A38: 'ilustrador', B06: 'tradução',
+  B01: 'edição', A36: 'direção de arte', A11: 'fotografias', A09: 'introdução',
+}
+
+type Contributor = { type: string; firstName?: string; lastName?: string; groupName?: string }
+
+function formatDate(s: string) {
+  if (!s) return ''
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+    .format(new Date(s + 'T12:00:00'))
+}
+
+function formatContributors(contributors: Contributor[]) {
+  if (!contributors?.length) return ''
+  const groups: Record<string, string[]> = {}
+  for (const c of contributors) {
+    const role = CONTRIBUTOR_TYPES[c.type]
+    if (!role) continue
+    const name = c.groupName || [c.firstName, c.lastName].filter(Boolean).join(' ')
+    if (!name) continue
+    if (!groups[role]) groups[role] = []
+    groups[role].push(name)
+  }
+  return Object.entries(groups)
+    .map(([role, names]) => `${role}: ${names.join(', ')}`)
+    .join('  ·  ')
+}
+
 type Props = {
   livros: Livro[]
   totalCount: number
@@ -183,6 +212,17 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     setSelectedEditoras(prev => { const n = new Set(prev); n.has(nome) ? n.delete(nome) : n.add(nome); return n })
   }
 
+  function toggleGrupo(nomeGrupo: string) {
+    const selosDoGrupo = selos.filter(s => s.grupo?.nome === nomeGrupo).map(s => s.nome_display)
+    const todosAtivos = selosDoGrupo.every(nome => selectedEditoras.has(nome))
+    setSelectedEditoras(prev => {
+      const n = new Set(prev)
+      if (todosAtivos) selosDoGrupo.forEach(nome => n.delete(nome))
+      else selosDoGrupo.forEach(nome => n.add(nome))
+      return n
+    })
+  }
+
   const anoAtual = hoje.getFullYear()
   const years = Array.from({ length: anoAtual + 3 - 1980 }, (_, i) => 1980 + i)
   const selosFiltrados = epSearch.trim() ? selos.filter(s => s.nome_display?.toLowerCase().includes(epSearch.toLowerCase())) : selos
@@ -295,9 +335,14 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
                 style={{ width:'100%', background:'#111', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.82rem', fontFamily:'inherit', padding:'7px 12px', borderRadius:6, outline:'none' }} />
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'12px 16px' }}>
-              {selosPorGrupo.map(({ grupo, selos: sl }) => (
+              {selosPorGrupo.map(({ grupo, selos: sl }) => {
+                const selosDoGrupo = sl.map(s => s.nome_display)
+                const todosAtivos = selosDoGrupo.length > 0 && selosDoGrupo.every(n => selectedEditoras.has(n))
+                return (
                 <div key={grupo.nome} style={{ marginBottom:16 }}>
-                  <div style={{ fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:'bold', marginBottom:6, color:grupo.cor }}>{grupo.nome}</div>
+                  <div onClick={() => toggleGrupo(grupo.nome)} style={{ fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:'bold', marginBottom:6, color: todosAtivos ? grupo.cor : grupo.cor, cursor:'pointer', opacity: todosAtivos ? 1 : 0.7, display:'flex', alignItems:'center', gap:6 }}>
+                    {todosAtivos && <span style={{ fontSize:'0.6rem' }}>✓</span>}{grupo.nome}
+                  </div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                     {sl.map(s => (
                       <button key={s.nome_display} onClick={() => toggleEditora(s.nome_display)} style={{
@@ -312,7 +357,8 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
                     ))}
                   </div>
                 </div>
-              ))}
+              )
+              })}
               {selosSemGrupo.length > 0 && (
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:'bold', marginBottom:6, color:'var(--muted)' }}>independentes</div>
@@ -368,15 +414,23 @@ function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
 }
 
 function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void }) {
+  const [extra, setExtra] = useState<{ sinopse?: string; biografia_autor?: string; contributors?: Contributor[] } | null>(null)
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', h)
     return () => document.removeEventListener('keydown', h)
   }, [onClose])
 
-  const dataFormatada = livro.data_publicacao
-    ? new Date(livro.data_publicacao).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    : ''
+  useEffect(() => {
+    fetch(`${DIRECTUS_URL}/items/biblioteca/${livro.id}?fields=sinopse,biografia_autor,contributors`)
+      .then(r => r.json())
+      .then(j => setExtra(j.data || {}))
+      .catch(() => setExtra({}))
+  }, [livro.id])
+
+  const dataFormatada = livro.data_publicacao ? formatDate(livro.data_publicacao) : ''
+  const contribs = extra?.contributors ? formatContributors(extra.contributors) : ''
 
   return (
     <div onClick={e => { if (e.target===e.currentTarget) onClose() }}
@@ -401,6 +455,30 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
               {livro.isbn && <span style={{ fontSize:'0.72rem', padding:'3px 8px', border:'1px solid var(--border)', borderRadius:4, color:'#666' }}>ISBN {livro.isbn}</span>}
             </div>
           </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding:'24px 28px 32px', borderTop:'1px solid var(--border)' }}>
+          {extra === null && <div style={{ color:'#444', fontSize:'0.82rem' }}>carregando…</div>}
+          {extra !== null && (
+            <>
+              {contribs && (
+                <div style={{ fontSize:'0.78rem', color:'#666', marginBottom:20, lineHeight:1.6 }}>{contribs}</div>
+              )}
+              {extra.sinopse
+                ? <div style={{ fontSize:'0.88rem', lineHeight:1.75, color:'#bbb' }}>
+                    {extra.sinopse.split('\n').filter(Boolean).map((p, i) => <p key={i} style={{ marginBottom:12 }}>{p}</p>)}
+                  </div>
+                : <div style={{ color:'#444', fontSize:'0.82rem' }}>sinopse não disponível</div>
+              }
+              {extra.biografia_autor && (
+                <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid var(--border)' }}>
+                  <div style={{ fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.08em', color:'#555', marginBottom:10 }}>sobre o autor</div>
+                  <div style={{ fontSize:'0.85rem', lineHeight:1.7, color:'#888' }}>{extra.biografia_autor}</div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
