@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { fetchDirectus } from '@/lib/directus'
 import CatalogoClient from '@/components/CatalogoClient'
 
