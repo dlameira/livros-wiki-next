@@ -76,6 +76,9 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     if (isFetching) return
     setIsFetching(true)
 
+    // No reset, limpa seenIds antes de buscar (evita filtrar tudo como "já visto")
+    if (reset) seenIds.current = new Set()
+
     const targetPage = reset ? 1 : (overridePage ?? page + 1)
 
     // Quais editoras filtrar
