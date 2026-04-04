@@ -441,17 +441,17 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
         <button onClick={onClose} style={{ position:'absolute', top:16, left:20, background:'rgba(0,0,0,0.5)', border:'1px solid #333', color:'#aaa', padding:'6px 12px', borderRadius:6, fontSize:'0.78rem', cursor:'pointer', fontFamily:'inherit', zIndex:10 }}>
           ← voltar
         </button>
-        <div style={{ display:'flex', minHeight:280 }}>
-          <div style={{ width:200, flexShrink:0, background:'#111', minHeight:280, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+        <div style={{ display:'flex', minHeight:240 }}>
+          <div style={{ width:180, flexShrink:0, background:'#0d0d0d', display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'52px 16px 20px' }}>
             {livro.capa_url
-              ? <img src={livro.capa_url} alt={livro.titulo} style={{ width:'100%', height:'auto', maxHeight:340, objectFit:'contain', display:'block' }} />
-              : <div style={{ color:'#2a2a2a', fontSize:'3rem' }}>📖</div>
+              ? <img src={livro.capa_url} alt={livro.titulo} style={{ width:'100%', height:'auto', display:'block', borderRadius:2, boxShadow:'0 4px 16px rgba(0,0,0,0.5)' }} />
+              : <div style={{ color:'#2a2a2a', fontSize:'3rem', paddingTop:40 }}>📖</div>
             }
           </div>
-          <div style={{ flex:1, padding:'48px 28px 24px', display:'flex', flexDirection:'column', justifyContent:'flex-end', background:'linear-gradient(to bottom, #111 0%, var(--surface) 100%)' }}>
-            {livro.editora && <div style={{ fontSize:'0.72rem', color:'var(--accent)', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:8 }}>{livro.editora}</div>}
-            <h2 style={{ fontSize:'1.4rem', fontWeight:'normal', lineHeight:1.3, color:'#f0e8dc', marginBottom:6 }}>{livro.titulo}</h2>
-            {livro.autor && <div style={{ fontSize:'0.9rem', color:'#aaa', marginBottom:12 }}>{livro.autor}</div>}
+          <div style={{ flex:1, padding:'52px 28px 28px', display:'flex', flexDirection:'column', justifyContent:'flex-start', background:'var(--surface)' }}>
+            {livro.editora && <div style={{ fontSize:'0.72rem', color:'var(--accent)', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:10 }}>{livro.editora}</div>}
+            <h2 style={{ fontSize:'1.4rem', fontWeight:'normal', lineHeight:1.3, color:'#f0e8dc', marginBottom:8 }}>{livro.titulo}</h2>
+            {livro.autor && <div style={{ fontSize:'0.9rem', color:'#aaa', marginBottom:16 }}>{livro.autor}</div>}
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
               <span style={{ fontSize:'0.72rem', padding:'3px 8px', border:'1px solid var(--border)', borderRadius:4, color:'#666' }}>
                 {dataFormatada || 'sem data cadastrada'}
