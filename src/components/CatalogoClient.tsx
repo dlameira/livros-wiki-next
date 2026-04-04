@@ -20,7 +20,7 @@ type Preset = 'prevenda' | 'lancamentos' | 'tudo'
 
 function buildDates(preset: Preset) {
   const hoje = new Date(); const ano = hoje.getFullYear(); const mes = hoje.getMonth()
-  if (preset === 'prevenda')    return { from: new Date(ano, mes, 1),     to: new Date(ano, mes + 3, 1) }
+  if (preset === 'prevenda')    return { from: new Date(),                to: new Date(ano, mes + 3, 1) }
   if (preset === 'lancamentos') return { from: new Date(ano, mes - 6, 1), to: new Date(ano, mes + 2, 1) }
   return { from: null, to: null }
 }
@@ -60,6 +60,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   // ── Refs (não causam re-render) ──────────────────────────────────────────────
   const pageRef      = useRef(1)
   const fetchingRef  = useRef(false)
+  const fetchGenRef  = useRef(0)
   const seenIds      = useRef(new Set(initialLivros.map(l => l.id)))
   const sentinelRef  = useRef<HTMLDivElement>(null)
 
@@ -70,7 +71,8 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
   // ── Fetch ────────────────────────────────────────────────────────────────────
   async function fetchLivros(opts: { reset: boolean; currentPreset: Preset; currentFrom: Date | null; currentTo: Date | null; currentEditoras: Set<string>; currentAutor: string }) {
-    if (fetchingRef.current) return
+    if (!opts.reset && fetchingRef.current) return
+    const gen = opts.reset ? ++fetchGenRef.current : fetchGenRef.current
     fetchingRef.current = true
     if (opts.reset) setLoading(true)
 
@@ -103,6 +105,8 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     try {
       const res  = await fetch(url)
       const json = await res.json()
+      if (gen !== fetchGenRef.current) return  // resultado stale, ignora
+
       const tc   = json.meta?.filter_count ?? 0
       setTotal(tc)
 
@@ -122,10 +126,12 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
         setHasMore(seenIds.current.size < tc)
       }
     } catch (e) {
-      console.error(e)
+      if (gen === fetchGenRef.current) console.error(e)
     } finally {
-      fetchingRef.current = false
-      setLoading(false)
+      if (gen === fetchGenRef.current) {
+        fetchingRef.current = false
+        setLoading(false)
+      }
     }
   }
 
