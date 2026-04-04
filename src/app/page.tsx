@@ -1,45 +1,62 @@
 export const dynamic = 'force-dynamic'
 
-import { fetchDirectus } from '@/lib/directus'
+import { DIRECTUS_URL } from '@/lib/directus'
 import CatalogoClient from '@/components/CatalogoClient'
+
+export type Livro = {
+  id: number
+  titulo: string
+  autor: string
+  editora: string
+  capa_url: string | null
+  data_publicacao: string
+  isbn: string
+}
+
+export type Selo = {
+  nome_display: string
+  grupo: { nome: string; cor: string } | null
+}
 
 async function getInitialData() {
   const hoje = new Date()
   const anoAtual = hoje.getFullYear()
-
-  // Livros de lançamentos (padrão inicial: últimos 6 meses até +2 meses)
   const dataFrom = new Date(anoAtual, hoje.getMonth() - 6, 1).toISOString().split('T')[0]
   const dataTo   = new Date(anoAtual, hoje.getMonth() + 2, 1).toISOString().split('T')[0]
 
-  const [livrosRes, selosRes, gruposRes] = await Promise.all([
-    fetchDirectus('/items/livros', {
-      'filter[data_publicacao][_gte]': dataFrom,
-      'filter[data_publicacao][_lte]': dataTo,
-      'filter[editora][selos_id][ativo][_eq]': 'true',
-      'sort': '-data_publicacao',
-      'limit': '500',
-      'page': '1',
-      'fields': 'id,titulo,autor,editora,capa_url,data_publicacao,isbn',
-      'meta': 'total_count',
-    }),
-    fetchDirectus('/items/selos', {
-      'filter[ativo][_eq]': 'true',
-      'sort': 'nome_display',
-      'limit': '-1',
-      'fields': 'id,nome_display,grupo',
-    }),
-    fetchDirectus('/items/grupos_editoriais', {
-      'sort': 'nome',
-      'limit': '-1',
-      'fields': 'id,nome,cor',
-    }),
-  ])
+  // Busca selos ativos com grupo aninhado
+  const selosRes = await fetch(
+    `${DIRECTUS_URL}/items/selos?fields=nome_display,grupo.nome,grupo.cor&limit=500&filter[ativo][_eq]=true`,
+    { cache: 'no-store' }
+  )
+  const selosJson = await selosRes.json()
+  const selos: Selo[] = selosJson.data ?? []
+
+  // Nomes das editoras ativas para filtrar o catálogo
+  const editorasAtivas = selos.map(s => s.nome_display).filter(Boolean)
+
+  // Busca livros com filtro JSON
+  const filtroInicial = {
+    _and: [
+      { data_publicacao: { _gte: dataFrom, _lte: dataTo } },
+      { editora: { _in: editorasAtivas } },
+    ]
+  }
+
+  const livrosUrl = `${DIRECTUS_URL}/items/biblioteca`
+    + `?fields=id,isbn,titulo,autor,editora,capa_url,data_publicacao`
+    + `&sort=-data_publicacao`
+    + `&limit=500&page=1&meta=total_count`
+    + `&filter=${encodeURIComponent(JSON.stringify(filtroInicial))}`
+
+  const livrosRes  = await fetch(livrosUrl, { cache: 'no-store' })
+  const livrosJson = await livrosRes.json()
 
   return {
-    livros: livrosRes.data ?? [],
-    totalCount: livrosRes.meta?.total_count ?? 0,
-    selos: selosRes.data ?? [],
-    grupos: gruposRes.data ?? [],
+    livros: (livrosJson.data ?? []) as Livro[],
+    totalCount: livrosJson.meta?.total_count ?? 0,
+    selos,
+    editorasAtivas,
     dataFrom,
     dataTo,
   }
