@@ -108,7 +108,9 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     const editoras = opts.currentEditoras.size > 0 ? Array.from(opts.currentEditoras) : editorasAtivas
     const conditions: object[] = []
 
-    if (opts.currentPreset !== 'tudo' && (opts.currentFrom || opts.currentTo)) {
+    if (opts.currentPreset === 'tudo') {
+      conditions.push({ data_publicacao: { _nnull: true } })
+    } else if (opts.currentFrom || opts.currentTo) {
       const d: Record<string, string> = {}
       if (opts.currentFrom) d._gte = toISO(opts.currentFrom)
       if (opts.currentTo)   d._lte = toISO(opts.currentTo)
@@ -451,7 +453,9 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
             <h2 style={{ fontSize:'1.4rem', fontWeight:'normal', lineHeight:1.3, color:'#f0e8dc', marginBottom:6 }}>{livro.titulo}</h2>
             {livro.autor && <div style={{ fontSize:'0.9rem', color:'#aaa', marginBottom:12 }}>{livro.autor}</div>}
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {dataFormatada && <span style={{ fontSize:'0.72rem', padding:'3px 8px', border:'1px solid var(--border)', borderRadius:4, color:'#666' }}>{dataFormatada}</span>}
+              <span style={{ fontSize:'0.72rem', padding:'3px 8px', border:'1px solid var(--border)', borderRadius:4, color:'#666' }}>
+                {dataFormatada || 'sem data cadastrada'}
+              </span>
               {livro.isbn && <span style={{ fontSize:'0.72rem', padding:'3px 8px', border:'1px solid var(--border)', borderRadius:4, color:'#666' }}>ISBN {livro.isbn}</span>}
             </div>
           </div>
