@@ -9,6 +9,15 @@
   --accent: #c9a84c;
 }
 
+html.light {
+  --bg: #f8f6f0;
+  --surface: #ffffff;
+  --border: #d8d3c8;
+  --text: #24211c;
+  --muted: #72777d;
+  --accent: #8a5c14;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {

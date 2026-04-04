@@ -68,6 +68,17 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const grupos = buildGrupos(selos)
   const hoje = new Date()
 
+  // ── Tema ─────────────────────────────────────────────────────────────────────
+  const [tema, setTema] = useState<'dark'|'light'>('dark')
+  useEffect(() => {
+    const saved = localStorage.getItem('livros-tema') as 'dark'|'light' | null
+    if (saved) setTema(saved)
+  }, [])
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', tema === 'light')
+    localStorage.setItem('livros-tema', tema)
+  }, [tema])
+
   // ── Estado de filtros ────────────────────────────────────────────────────────
   const [preset, setPreset]         = useState<Preset>('lancamentos')
   const [dateFrom, setDateFrom]     = useState<Date>(new Date(initialFrom))
@@ -241,14 +252,18 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
   return (
     <>
-      <header style={{ padding: '32px 48px 0', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+      <header style={{ padding: '32px 48px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'normal', letterSpacing: '0.06em', color: '#f0e8dc', marginBottom: 6 }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'normal', letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 6 }}>
             livros<span style={{ color: 'var(--accent)' }}>.</span>wiki
           </h1>
-          <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>livros sem algoritmos &nbsp;·&nbsp; <span style={{ color: '#444' }}>v 0.01 beta</span></p>
-          <p style={{ fontSize: '0.68rem', color: '#333', marginTop: 3 }}>por daniel lameira + metabooks</p>
+          <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>livros sem algoritmos &nbsp;·&nbsp; <span style={{ color: 'var(--muted)', opacity:.5 }}>v 0.01 beta</span></p>
+          <p style={{ fontSize: '0.68rem', color: 'var(--muted)', opacity:.4, marginTop: 3 }}>por daniel lameira + metabooks</p>
         </div>
+        <button onClick={() => setTema(t => t === 'dark' ? 'light' : 'dark')}
+          style={{ background:'none', border:'1px solid var(--border)', color:'var(--muted)', fontSize:'0.78rem', fontFamily:'inherit', padding:'5px 12px', borderRadius:20, cursor:'pointer', marginTop:6 }}>
+          {tema === 'dark' ? '☀ claro' : '☾ escuro'}
+        </button>
       </header>
 
       {/* Preset */}
@@ -436,49 +451,54 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
 
   return (
     <div onClick={e => { if (e.target===e.currentTarget) onClose() }}
-      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', zIndex:200, display:'flex', alignItems:'flex-start', justifyContent:'center', overflowY:'auto', padding:'40px 20px' }}>
-      <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, width:680, maxWidth:'100%', overflow:'hidden', position:'relative' }}>
-        <button onClick={onClose} style={{ position:'absolute', top:16, left:20, background:'rgba(0,0,0,0.5)', border:'1px solid #333', color:'#aaa', padding:'6px 12px', borderRadius:6, fontSize:'0.78rem', cursor:'pointer', fontFamily:'inherit', zIndex:10 }}>
-          ← voltar
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:200, display:'flex', alignItems:'flex-start', justifyContent:'center', overflowY:'auto', padding:'48px 20px 60px' }}>
+      <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, width:560, maxWidth:'100%', position:'relative' }}>
+
+        {/* Fechar */}
+        <button onClick={onClose}
+          style={{ position:'absolute', top:14, right:16, background:'none', border:'none', color:'var(--muted)', fontSize:'1.1rem', cursor:'pointer', lineHeight:1, padding:4 }}>
+          ✕
         </button>
-        <div style={{ display:'flex', minHeight:240 }}>
-          <div style={{ width:180, flexShrink:0, background:'#0d0d0d', display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'52px 16px 20px' }}>
-            {livro.capa_url
-              ? <img src={livro.capa_url} alt={livro.titulo} style={{ width:'100%', height:'auto', display:'block', borderRadius:2, boxShadow:'0 4px 16px rgba(0,0,0,0.5)' }} />
-              : <div style={{ color:'#2a2a2a', fontSize:'3rem', paddingTop:40 }}>📖</div>
-            }
+
+        {/* Capa centralizada */}
+        {livro.capa_url && (
+          <div style={{ display:'flex', justifyContent:'center', padding:'40px 40px 20px' }}>
+            <img src={livro.capa_url} alt={livro.titulo}
+              style={{ maxWidth:140, height:'auto', display:'block', borderRadius:3, boxShadow:'0 6px 24px rgba(0,0,0,0.35)' }} />
           </div>
-          <div style={{ flex:1, padding:'52px 28px 28px', display:'flex', flexDirection:'column', justifyContent:'flex-start', background:'var(--surface)' }}>
-            {livro.editora && <div style={{ fontSize:'0.72rem', color:'var(--accent)', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:10 }}>{livro.editora}</div>}
-            <h2 style={{ fontSize:'1.4rem', fontWeight:'normal', lineHeight:1.3, color:'#f0e8dc', marginBottom:8 }}>{livro.titulo}</h2>
-            {livro.autor && <div style={{ fontSize:'0.9rem', color:'#aaa', marginBottom:16 }}>{livro.autor}</div>}
-            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              <span style={{ fontSize:'0.72rem', padding:'3px 8px', border:'1px solid var(--border)', borderRadius:4, color:'#666' }}>
-                {dataFormatada || 'sem data cadastrada'}
-              </span>
-              {livro.isbn && <span style={{ fontSize:'0.72rem', padding:'3px 8px', border:'1px solid var(--border)', borderRadius:4, color:'#666' }}>ISBN {livro.isbn}</span>}
-            </div>
+        )}
+
+        {/* Info */}
+        <div style={{ padding: livro.capa_url ? '0 40px 24px' : '48px 40px 24px', textAlign:'center' }}>
+          {livro.editora && (
+            <div style={{ fontSize:'0.68rem', color:'var(--accent)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>{livro.editora}</div>
+          )}
+          <h2 style={{ fontSize:'1.35rem', fontWeight:'normal', lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>{livro.titulo}</h2>
+          {livro.autor && <div style={{ fontSize:'0.88rem', color:'var(--muted)', marginBottom:14 }}>{livro.autor}</div>}
+          <div style={{ fontSize:'0.72rem', color:'var(--muted)', opacity:.7 }}>
+            {dataFormatada || 'sem data cadastrada'}
+            {livro.isbn && <span style={{ marginLeft:10, paddingLeft:10, borderLeft:'1px solid var(--border)' }}>ISBN {livro.isbn}</span>}
           </div>
         </div>
 
         {/* Body */}
-        <div style={{ padding:'24px 28px 32px', borderTop:'1px solid var(--border)' }}>
-          {extra === null && <div style={{ color:'#444', fontSize:'0.82rem' }}>carregando…</div>}
+        <div style={{ padding:'20px 40px 36px', borderTop:'1px solid var(--border)' }}>
+          {extra === null && <div style={{ color:'var(--muted)', fontSize:'0.82rem', opacity:.5, textAlign:'center', padding:'8px 0' }}>carregando…</div>}
           {extra !== null && (
             <>
               {contribs && (
-                <div style={{ fontSize:'0.78rem', color:'#666', marginBottom:20, lineHeight:1.6 }}>{contribs}</div>
+                <div style={{ fontSize:'0.78rem', color:'var(--muted)', marginBottom:20, lineHeight:1.7, textAlign:'center', opacity:.8 }}>{contribs}</div>
               )}
               {extra.sinopse
-                ? <div style={{ fontSize:'0.88rem', lineHeight:1.75, color:'#bbb' }}>
-                    {extra.sinopse.split('\n').filter(Boolean).map((p, i) => <p key={i} style={{ marginBottom:12 }}>{p}</p>)}
+                ? <div style={{ fontSize:'0.88rem', lineHeight:1.8, color:'var(--text)', opacity:.85 }}>
+                    {extra.sinopse.split('\n').filter(Boolean).map((p, i) => <p key={i} style={{ marginBottom:14 }}>{p}</p>)}
                   </div>
-                : <div style={{ color:'#444', fontSize:'0.82rem' }}>sinopse não disponível</div>
+                : <div style={{ color:'var(--muted)', fontSize:'0.82rem', opacity:.5, textAlign:'center', padding:'8px 0' }}>sinopse não disponível</div>
               }
               {extra.biografia_autor && (
-                <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid var(--border)' }}>
-                  <div style={{ fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.08em', color:'#555', marginBottom:10 }}>sobre o autor</div>
-                  <div style={{ fontSize:'0.85rem', lineHeight:1.7, color:'#888' }}>{extra.biografia_autor}</div>
+                <div style={{ marginTop:28, paddingTop:24, borderTop:'1px solid var(--border)' }}>
+                  <div style={{ fontSize:'0.68rem', textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--muted)', opacity:.6, marginBottom:12, textAlign:'center' }}>sobre o autor</div>
+                  <div style={{ fontSize:'0.85rem', lineHeight:1.75, color:'var(--text)', opacity:.7 }}>{extra.biografia_autor}</div>
                 </div>
               )}
             </>
