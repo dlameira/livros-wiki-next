@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import type { Livro, Selo } from '@/app/page'
 
 const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'https://directus-production-afdd.up.railway.app'
@@ -69,7 +70,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const hoje = new Date()
 
   // ── Tema ─────────────────────────────────────────────────────────────────────
-  const [tema, setTema] = useState<'dark'|'light'>('dark')
+  const [tema, setTema] = useState<'dark'|'light'>('light')
   useEffect(() => {
     const saved = localStorage.getItem('livros-tema') as 'dark'|'light' | null
     if (saved) setTema(saved)
@@ -257,7 +258,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'normal', letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 6 }}>
             livros<span style={{ color: 'var(--accent)' }}>.</span>wiki
           </h1>
-          <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>livros sem algoritmos &nbsp;·&nbsp; <span style={{ color: 'var(--muted)', opacity:.5 }}>v 0.01 beta</span></p>
+          <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>livros sem algoritmos &nbsp;·&nbsp; <Link href="/changelog" style={{ color: 'var(--muted)', opacity:.5, textDecoration:'none' }}>v 0.011</Link></p>
           <p style={{ fontSize: '0.68rem', color: 'var(--muted)', opacity:.4, marginTop: 3 }}>por daniel lameira + metabooks</p>
         </div>
         <button onClick={() => setTema(t => t === 'dark' ? 'light' : 'dark')}
