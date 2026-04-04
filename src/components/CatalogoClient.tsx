@@ -442,10 +442,10 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
           ← voltar
         </button>
         <div style={{ display:'flex', minHeight:280 }}>
-          <div style={{ width:180, flexShrink:0, background:'#111' }}>
+          <div style={{ width:200, flexShrink:0, background:'#111', minHeight:280, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
             {livro.capa_url
-              ? <img src={livro.capa_url} alt={livro.titulo} style={{ width:'100%', height:'auto', display:'block' }} />
-              : <div style={{ width:'100%', height:280, display:'flex', alignItems:'center', justifyContent:'center', color:'#2a2a2a', fontSize:'3rem' }}>📖</div>
+              ? <img src={livro.capa_url} alt={livro.titulo} style={{ width:'100%', height:'auto', maxHeight:340, objectFit:'contain', display:'block' }} />
+              : <div style={{ color:'#2a2a2a', fontSize:'3rem' }}>📖</div>
             }
           </div>
           <div style={{ flex:1, padding:'48px 28px 24px', display:'flex', flexDirection:'column', justifyContent:'flex-end', background:'linear-gradient(to bottom, #111 0%, var(--surface) 100%)' }}>
