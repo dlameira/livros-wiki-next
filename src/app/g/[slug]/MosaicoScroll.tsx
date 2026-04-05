@@ -21,18 +21,16 @@ export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
   const [modal, setModal]   = useState<ModalTarget | null>(null)
   const [modalKey, setModalKey] = useState(0)
 
-  // Recalculate maxOffset on mount + whenever images load
+  // Calculate maxOffset once on mount (track width is fixed — no layout shift)
   useEffect(() => {
-    function recalc() {
-      const outer = outerRef.current
-      const track = trackRef.current
-      if (!outer || !track) return
-      setMaxOffset(Math.max(0, track.scrollWidth - outer.clientWidth))
-    }
-    recalc()
-    const ro = new ResizeObserver(recalc)
-    if (outerRef.current) ro.observe(outerRef.current)
-    if (trackRef.current) ro.observe(trackRef.current)
+    const outer = outerRef.current
+    const track = trackRef.current
+    if (!outer || !track) return
+    setMaxOffset(Math.max(0, track.scrollWidth - outer.clientWidth))
+    const ro = new ResizeObserver(() => {
+      if (outer && track) setMaxOffset(Math.max(0, track.scrollWidth - outer.clientWidth))
+    })
+    ro.observe(outer)
     return () => ro.disconnect()
   }, [livros])
 
@@ -106,6 +104,7 @@ export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
                   title={livro.titulo}
                   style={{
                     height: '100%',
+                    width: '133px',
                     flexShrink: 0,
                     borderRadius: '3px',
                     overflow: 'hidden',
@@ -121,13 +120,8 @@ export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
                     <img
                       src={livro.capa_url}
                       alt={livro.titulo}
-                      style={{ height: '100%', width: 'auto', display: 'block', objectFit: 'cover' }}
+                      style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }}
                       loading="lazy"
-                      onLoad={() => {
-                        const outer = outerRef.current
-                        const track = trackRef.current
-                        if (outer && track) setMaxOffset(Math.max(0, track.scrollWidth - outer.clientWidth))
-                      }}
                     />
                   )}
                 </div>
