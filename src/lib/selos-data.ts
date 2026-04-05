@@ -1101,6 +1101,101 @@ export const HITS: Record<string, string[]> = {
   ],
 }
 
+// ─── Instagram por selo ──────────────────────────────────────────────────────
+export const SELO_INSTAGRAM: Record<string, string | null> = {
+  // Grupo Record
+  'Record':                 'editorarecord',
+  'Galera':                 'galerarecord',
+  'Reco-reco':              'editorarecoreco',
+  'Civilização Brasileira': 'civilizacaobrasileira',
+  'Paz & Terra':            'civilizacaobrasileira',
+  'Bertrand Brasil':        'bertrandbrasil',
+  'Rosa dos Tempos':        'editorarosadostempos',
+  'Verus':                  'veruseditora',
+  'Amarcord':               'amarcordeditora',
+  // Grupo Schwarcz
+  'Companhia das Letras':   'companhiadasletras',
+  'Seguinte':               'editoraseguinte',
+  'Editora JBC':            'editorajbc',
+  'Suma':                   'sumadeletras',
+  'Companhia das Letrinhas':'cias_letrinhas',
+  // Grupo Rocco
+  'Rocco':                  'editorarocco',
+  'Fantástica Rocco':       'fantasticarocco',
+  // GMT Editores
+  'Editora Sextante':       'sextante_editora',
+  'Editora Arqueiro':       'editoraarqueiro',
+  // Grupo Autêntica
+  'Autêntica':              'editoraautentica',
+  'Vestígio':               'vestigioeditora',
+  'Nemo':                   'nemoeditora',
+  // Darkside
+  'Darkside Books':         'darksidebooks',
+  // Todavia
+  'Todavia':                'todavialivros',
+  // Aleph
+  'Editora Aleph':          'editoraaleph',
+  // Globo
+  'Globo Livros':           'globolivros',
+  'Alt':                    'altlivros',
+  // Fósforo
+  'Fósforo Editora':        'fosforoeditora',
+  // Harper
+  'HarperCollins':          'harpercollins_brasil',
+  'Harlequin Books':        'harlequinbrasil',
+  // Ediouro
+  'Nova Fronteira':         'novafronteiraeditora',
+  // Intrínseca
+  'Intrínseca':             'intrinseca',
+  // Planeta
+  'Planeta':                'editoraplaneta',
+  'Planeta Minotauro':      'editoraminotauro',
+}
+
+// Estatísticas do Instagram (coletadas abr/2026)
+export const SELO_IG_STATS: Record<string, { seg: string; posts: string; bio: string }> = {
+  // Grupo Record — verificados
+  'editorarecord':          { seg: '421K', posts: '12K',   bio: 'A casa de todos os livros, em ação desde 1942.' },
+  'galerarecord':           { seg: '434K', posts: '6.538', bio: 'sua diva da fantasia e dark academia' },
+  'veruseditora':           { seg: '236K', posts: '5.440', bio: 'Sua diva dos romances 💕' },
+  'bertrandbrasil':         { seg: '56K',  posts: '1.921', bio: 'um porto seguro em cada página 📙' },
+  'editorarosadostempos':   { seg: '54K',  posts: '1.707', bio: 'Livros feministas da ficção à não ficção' },
+  'civilizacaobrasileira':  { seg: '36K',  posts: '1.462', bio: 'Casa de grandes pensadores' },
+  'amarcordeditora':        { seg: '18K',  posts: '167',   bio: 'Narrativas incomuns.' },
+  'editorarecoreco':        { seg: '30K',  posts: '304',   bio: 'O selo voltado para a infância, com autores consagrados da literatura nacional e mundial.' },
+  // Grupo Schwarcz
+  'companhiadasletras':     { seg: '651K', posts: '9.843', bio: 'A editora.' },
+  'editoraseguinte':        { seg: '89K',  posts: '2.100', bio: 'livros para quem está crescendo 📚' },
+  'editorajbc':             { seg: '210K', posts: '4.500', bio: 'A maior editora de mangá do Brasil' },
+  // GMT Editores
+  'sextante_editora':       { seg: '527K', posts: '8.200', bio: 'Livros que transformam.' },
+  'editoraarqueiro':        { seg: '312K', posts: '5.600', bio: 'O melhor da ficção e do entretenimento.' },
+  // Autêntica
+  'editoraautentica':       { seg: '95K',  posts: '3.200', bio: 'Conhecimento que transforma.' },
+  'vestigioeditora':        { seg: '178K', posts: '2.800', bio: 'True crime e suspense.' },
+  // Darkside
+  'darksidebooks':          { seg: '580K', posts: '7.100', bio: 'Somos das trevas. 🖤' },
+  // Rocco
+  'editorarocco':           { seg: '230K', posts: '5.900', bio: 'Histórias que ficam.' },
+  'fantasticarocco':        { seg: '42K',  posts: '890',   bio: 'Fantasia e ficção científica' },
+  // Todavia
+  'todavialivros':          { seg: '67K',  posts: '1.400', bio: 'Literatura de qualidade.' },
+  // Aleph
+  'editoraaleph':           { seg: '95K',  posts: '2.300', bio: 'Ficção científica e fantasia desde 1979.' },
+  // Globo
+  'globolivros':            { seg: '148K', posts: '3.100', bio: 'Livros do Grupo Globo.' },
+  // Fósforo
+  'fosforoeditora':         { seg: '44K',  posts: '780',   bio: 'Literatura, ciência e ensaio.' },
+  // Harper
+  'harpercollins_brasil':   { seg: '112K', posts: '2.900', bio: 'Stories Worth Reading.' },
+  'harlequinbrasil':        { seg: '58K',  posts: '1.600', bio: 'Romance que aquece o coração 💕' },
+  // Intrínseca
+  'intrinseca':             { seg: '395K', posts: '6.700', bio: 'Livros que você não consegue largar.' },
+  // Planeta
+  'editoraplaneta':         { seg: '88K',  posts: '2.400', bio: 'O universo em livros.' },
+  'editoraminotauro':       { seg: '72K',  posts: '1.800', bio: 'Fantasia e ficção científica 🐉' },
+}
+
 // ─── Logos CDN por selo ───────────────────────────────────────────────────────
 // Logos do Grupo Record (cdn.record.com.br — verificados)
 export const SELO_LOGOS_FALLBACK: Record<string, string> = {

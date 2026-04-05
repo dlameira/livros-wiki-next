@@ -1,6 +1,7 @@
 import { DIRECTUS_URL } from '@/lib/directus'
-import { SELO_INFO, HITS, SELO_LOGOS_FALLBACK } from '@/lib/selos-data'
+import { SELO_INFO, HITS, SELO_LOGOS_FALLBACK, SELO_INSTAGRAM } from '@/lib/selos-data'
 import { notFound } from 'next/navigation'
+import SelosGrid, { type SeloEnriquecido, type Capa } from './SelosGrid'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,6 @@ function slugify(nome: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
-
 
 type Grupo = { id: number; nome: string; cor?: string }
 
@@ -55,8 +55,8 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   seisAtras.setMonth(seisAtras.getMonth() - 6)
   const seisAtrasStr = seisAtras.toISOString().slice(0, 10)
 
-  // Fetch covers + real catalog count + lançamentos + pré-vendas per active selo in parallel
-  const livrosPorSelo: Record<string, Livro[]> = {}
+  // Fetch covers + contagens por selo ativo em paralelo
+  const livrosPorSelo: Record<string, Capa[]> = {}
   const contagemPorSelo: Record<string, number> = {}
   const lancPorSelo: Record<string, number> = {}
   const prevPorSelo: Record<string, number> = {}
@@ -81,7 +81,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
       }))
 
       const [coversRes, countRes, lancRes, prevRes] = await Promise.all([
-        fetch(`${DIRECTUS_URL}/items/biblioteca?fields=isbn,titulo,editora,capa_url,data_publicacao&sort=-data_publicacao&limit=16&filter=${filterCovers}`),
+        fetch(`${DIRECTUS_URL}/items/biblioteca?fields=isbn,titulo,capa_url&sort=-data_publicacao&limit=16&filter=${filterCovers}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterCount}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterLanc}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterPrev}`),
@@ -94,7 +94,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
     })
   )
 
-  // For inactive selos, use stored total or fetch count
+  // Selos inativos: só contagem
   await Promise.all(
     selosInativos.map(async (selo) => {
       if (selo.total_livros_mb && selo.total_livros_mb > 0) {
@@ -109,7 +109,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
 
   const totalLivros = Object.values(contagemPorSelo).reduce((sum, n) => sum + n, 0)
 
-  // Mosaico: 20 livros mais recentes do grupo
+  // Mosaico de capas recentes
   const nomesSelos = selos.map(s => s.nome_display)
   let mosaico: Livro[] = []
   if (nomesSelos.length > 0) {
@@ -120,7 +120,24 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
     mosaico = (await res.json()).data || []
   }
 
-  const sortedSelos = [...selosAtivos, ...selosInativos]
+  // Monta array enriquecido para o componente client
+  const selosEnriquecidos: SeloEnriquecido[] = [...selosAtivos, ...selosInativos].map(selo => {
+    const info = SELO_INFO[selo.nome_display]
+    return {
+      id: selo.id,
+      nome_display: selo.nome_display,
+      ativo: selo.ativo,
+      logoUrl: selo.logo_url || SELO_LOGOS_FALLBACK[selo.nome_display] || null,
+      descricao: selo.descricao || info?.desc || null,
+      tag: info?.tag || null,
+      covers: livrosPorSelo[selo.nome_display] || [],
+      count: contagemPorSelo[selo.nome_display] || 0,
+      nLanc: lancPorSelo[selo.nome_display] || 0,
+      nPrev: prevPorSelo[selo.nome_display] || 0,
+      hits: HITS[selo.nome_display] || [],
+      igHandle: SELO_INSTAGRAM[selo.nome_display] ?? null,
+    }
+  })
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Georgia, serif' }}>
@@ -197,164 +214,9 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
         </div>
       )}
 
-      {/* ── SELOS ────────────────────────────────────────── */}
-      <div style={{ padding: '48px 64px 80px' }}>
-        <div style={{ fontSize: '0.7rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
-          selos do grupo
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '2px' }}>
-          {sortedSelos.map(selo => {
-            const covers = livrosPorSelo[selo.nome_display] || []
-            const count = contagemPorSelo[selo.nome_display] || 0
-            const nLanc = lancPorSelo[selo.nome_display] || 0
-            const nPrev = prevPorSelo[selo.nome_display] || 0
-            const isInativo = !selo.ativo
-            // Selos marcados como ativos mas sem atividade recente
-            const semLancamentos = !isInativo && nLanc === 0 && nPrev === 0
-            const info = SELO_INFO[selo.nome_display]
-            const hits = HITS[selo.nome_display] || []
-            const logoUrl = selo.logo_url || SELO_LOGOS_FALLBACK[selo.nome_display] || null
-            const descricao = selo.descricao || info?.desc || null
+      {/* ── SELOS (componente client com sort interativo) ── */}
+      <SelosGrid selos={selosEnriquecidos} />
 
-            return (
-              <div
-                key={selo.id}
-                style={{
-                  background: isInativo ? 'rgba(192,57,43,0.04)' : 'var(--surface)',
-                  padding: '32px',
-                  border: isInativo ? '1px solid rgba(192,57,43,0.25)' : '1px solid var(--border)',
-                  position: 'relative',
-                  opacity: isInativo ? 0.7 : 1,
-                }}
-              >
-                {isInativo && (
-                  <div style={{
-                    position: 'absolute', top: '14px', right: '14px',
-                    fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase',
-                    color: '#c0392b', border: '1px solid #c0392b', background: 'rgba(192,57,43,0.08)',
-                    padding: '2px 7px', borderRadius: '3px',
-                  }}>
-                    inativo
-                  </div>
-                )}
-                {semLancamentos && (
-                  <div style={{
-                    position: 'absolute', top: '14px', right: '14px',
-                    fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase',
-                    color: '#888', border: '1px solid #444', background: 'rgba(100,100,100,0.08)',
-                    padding: '2px 7px', borderRadius: '3px',
-                  }}>
-                    sem lançamentos
-                  </div>
-                )}
-
-                {/* Logo */}
-                {logoUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={logoUrl}
-                    alt={selo.nome_display}
-                    style={{ maxHeight: '28px', maxWidth: '110px', width: 'auto', height: 'auto', display: 'block', marginBottom: '10px', opacity: 0.85 }}
-                  />
-                )}
-
-                {/* Header: nome + stats */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: info?.tag ? '8px' : '16px', gap: '12px' }}>
-                  <div style={{ fontSize: '1.1rem', letterSpacing: '0.03em', color: 'var(--text)' }}>
-                    {selo.nome_display}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px', flexShrink: 0 }}>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-                      <strong style={{ color: 'var(--text)', fontWeight: 'normal' }}>{count.toLocaleString('pt-BR')}</strong>{' '}em catálogo
-                    </span>
-                    {!isInativo && (
-                      <>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-                          <strong style={{ color: nLanc > 0 ? 'var(--text)' : 'var(--muted)', fontWeight: 'normal' }}>{nLanc}</strong>{' '}últimos 6 meses
-                        </span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-                          <strong style={{ color: nPrev > 0 ? '#c0392b' : 'var(--muted)', fontWeight: 'normal' }}>{nPrev}</strong>{' '}em pré-venda
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Tag */}
-                {info?.tag && (
-                  <div style={{ fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c0392b', marginBottom: '12px', opacity: 0.85 }}>
-                    {info.tag}
-                  </div>
-                )}
-
-                {/* Descrição */}
-                {descricao && (
-                  <div style={{
-                    fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '20px',
-                    fontStyle: 'italic',
-                    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                  }}>
-                    {descricao}
-                  </div>
-                )}
-
-                {/* Capas recentes — 2 linhas */}
-                {covers.length > 0 && (
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', overflow: 'hidden', maxHeight: '172px', marginBottom: hits.length > 0 ? '20px' : 0 }}>
-                    {covers.map(livro => (
-                      <div
-                        key={livro.isbn}
-                        title={livro.titulo}
-                        style={{
-                          width: '56px', height: '80px', background: 'var(--border)',
-                          borderRadius: '3px', overflow: 'hidden', flexShrink: 0,
-                          border: '1px solid var(--border)',
-                        }}
-                      >
-                        {livro.capa_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={livro.capa_url}
-                            alt={livro.titulo}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: '1.2rem' }}>
-                            ◻
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Títulos de referência (HITS) */}
-                {hits.length > 0 && (
-                  <div>
-                    <div style={{ fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px' }}>
-                      títulos de referência
-                    </div>
-                    <ol style={{ margin: 0, padding: '0 0 0 16px', listStyle: 'decimal' }}>
-                      {hits.slice(0, 5).map((hit, i) => (
-                        <li key={i} style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5, marginBottom: '2px' }}>
-                          {hit}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-
-                {!isInativo && covers.length === 0 && hits.length === 0 && (
-                  <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontStyle: 'italic' }}>
-                    sem títulos catalogados
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
     </div>
   )
 }
