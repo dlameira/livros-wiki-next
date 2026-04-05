@@ -358,9 +358,17 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   const selosAtivos = selos.filter(s => s.ativo)
   const selosInativos = selos.filter(s => !s.ativo)
 
-  // Fetch covers + real catalog count per active selo in parallel
+  // Datas para classificação de atividade
+  const hoje = new Date().toISOString().slice(0, 10)
+  const seisAtras = new Date()
+  seisAtras.setMonth(seisAtras.getMonth() - 6)
+  const seisAtrasStr = seisAtras.toISOString().slice(0, 10)
+
+  // Fetch covers + real catalog count + lançamentos + pré-vendas per active selo in parallel
   const livrosPorSelo: Record<string, Livro[]> = {}
   const contagemPorSelo: Record<string, number> = {}
+  const lancPorSelo: Record<string, number> = {}
+  const prevPorSelo: Record<string, number> = {}
 
   await Promise.all(
     selosAtivos.map(async (selo) => {
@@ -368,14 +376,30 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
         _and: [{ editora: { _eq: selo.nome_display } }, { capa_url: { _nnull: true } }]
       }))
       const filterCount = encodeURIComponent(JSON.stringify({ editora: { _eq: selo.nome_display } }))
+      const filterLanc = encodeURIComponent(JSON.stringify({
+        _and: [
+          { editora: { _eq: selo.nome_display } },
+          { data_publicacao: { _gte: seisAtrasStr, _lte: hoje } },
+        ]
+      }))
+      const filterPrev = encodeURIComponent(JSON.stringify({
+        _and: [
+          { editora: { _eq: selo.nome_display } },
+          { data_publicacao: { _gt: hoje } },
+        ]
+      }))
 
-      const [coversRes, countRes] = await Promise.all([
+      const [coversRes, countRes, lancRes, prevRes] = await Promise.all([
         fetch(`${DIRECTUS_URL}/items/biblioteca?fields=isbn,titulo,editora,capa_url,data_publicacao&sort=-data_publicacao&limit=16&filter=${filterCovers}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterCount}`),
+        fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterLanc}`),
+        fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterPrev}`),
       ])
 
       livrosPorSelo[selo.nome_display] = (await coversRes.json()).data || []
       contagemPorSelo[selo.nome_display] = (await countRes.json()).meta?.filter_count || 0
+      lancPorSelo[selo.nome_display] = (await lancRes.json()).meta?.filter_count || 0
+      prevPorSelo[selo.nome_display] = (await prevRes.json()).meta?.filter_count || 0
     })
   )
 
@@ -491,7 +515,11 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
           {sortedSelos.map(selo => {
             const covers = livrosPorSelo[selo.nome_display] || []
             const count = contagemPorSelo[selo.nome_display] || 0
+            const nLanc = lancPorSelo[selo.nome_display] || 0
+            const nPrev = prevPorSelo[selo.nome_display] || 0
             const isInativo = !selo.ativo
+            // Selos marcados como ativos mas sem atividade recente
+            const semLancamentos = !isInativo && nLanc === 0 && nPrev === 0
             const info = SELO_INFO[selo.nome_display]
             const hits = HITS[selo.nome_display] || []
             const logoUrl = selo.logo_url || SELO_LOGOS_FALLBACK[selo.nome_display] || null
@@ -518,6 +546,16 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
                     inativo
                   </div>
                 )}
+                {semLancamentos && (
+                  <div style={{
+                    position: 'absolute', top: '14px', right: '14px',
+                    fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase',
+                    color: '#888', border: '1px solid #444', background: 'rgba(100,100,100,0.08)',
+                    padding: '2px 7px', borderRadius: '3px',
+                  }}>
+                    sem lançamentos
+                  </div>
+                )}
 
                 {/* Logo */}
                 {logoUrl && (
@@ -529,17 +567,25 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
                   />
                 )}
 
-                {/* Header: nome + contagem */}
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: info?.tag ? '8px' : '16px', gap: '12px' }}>
+                {/* Header: nome + stats */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: info?.tag ? '8px' : '16px', gap: '12px' }}>
                   <div style={{ fontSize: '1.1rem', letterSpacing: '0.03em', color: 'var(--text)' }}>
                     {selo.nome_display}
                   </div>
-                  <div style={{ flexShrink: 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px', flexShrink: 0 }}>
                     <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-                      <strong style={{ color: 'var(--text)', fontWeight: 'normal' }}>
-                        {count.toLocaleString('pt-BR')}
-                      </strong>{' '}títulos
+                      <strong style={{ color: 'var(--text)', fontWeight: 'normal' }}>{count.toLocaleString('pt-BR')}</strong>{' '}em catálogo
                     </span>
+                    {!isInativo && (
+                      <>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+                          <strong style={{ color: nLanc > 0 ? 'var(--text)' : 'var(--muted)', fontWeight: 'normal' }}>{nLanc}</strong>{' '}últimos 6 meses
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+                          <strong style={{ color: nPrev > 0 ? '#c0392b' : 'var(--muted)', fontWeight: 'normal' }}>{nPrev}</strong>{' '}em pré-venda
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
