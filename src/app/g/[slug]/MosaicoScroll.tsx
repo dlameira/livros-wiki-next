@@ -1,34 +1,61 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
+import { DetalheModal, type ModalTarget } from './DetalheModal'
 
 type LivroMosaico = {
+  id: number
   isbn: string
   titulo: string
   capa_url: string | null
 }
 
 export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
-  const outerRef = useRef<HTMLDivElement>(null)   // clipping container
-  const trackRef = useRef<HTMLDivElement>(null)   // moving track
-  const [offset, setOffset] = useState(0)
+  const outerRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [offset, setOffset]       = useState(0)
+  const [maxOffset, setMaxOffset] = useState(0)
   const [leftHover,  setLeftHover]  = useState(false)
   const [rightHover, setRightHover] = useState(false)
+  const [hoveredIsbn, setHoveredIsbn] = useState<string | null>(null)
+  const [modal, setModal]   = useState<ModalTarget | null>(null)
+  const [modalKey, setModalKey] = useState(0)
+
+  // Recalculate maxOffset on mount + whenever images load
+  useEffect(() => {
+    function recalc() {
+      const outer = outerRef.current
+      const track = trackRef.current
+      if (!outer || !track) return
+      setMaxOffset(Math.max(0, track.scrollWidth - outer.clientWidth))
+    }
+    recalc()
+    const ro = new ResizeObserver(recalc)
+    if (outerRef.current) ro.observe(outerRef.current)
+    if (trackRef.current) ro.observe(trackRef.current)
+    return () => ro.disconnect()
+  }, [livros])
 
   function slide(dir: 'left' | 'right') {
     const outer = outerRef.current
     const track = trackRef.current
     if (!outer || !track) return
-    const pageW  = outer.clientWidth * 0.85
-    const maxOff = Math.max(0, track.scrollWidth - outer.clientWidth)
+    const pageW   = outer.clientWidth * 0.85
+    const freshMax = Math.max(0, track.scrollWidth - outer.clientWidth)
+    setMaxOffset(freshMax)
     setOffset(prev =>
       dir === 'right'
-        ? Math.min(prev + pageW, maxOff)
+        ? Math.min(prev + pageW, freshMax)
         : Math.max(prev - pageW, 0)
     )
   }
 
-  const arrowStyle = (hovered: boolean): React.CSSProperties => ({
+  function openModal(livro: LivroMosaico) {
+    setModal({ type: 'id', id: livro.id, titulo: livro.titulo, capa_url: livro.capa_url })
+    setModalKey(k => k + 1)
+  }
+
+  const arrowBtn = (dir: 'left' | 'right', hovered: boolean): React.CSSProperties => ({
     pointerEvents: 'all',
     background: hovered ? 'var(--text)' : 'var(--surface)',
     border: '1px solid var(--border)',
@@ -44,67 +71,107 @@ export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
     transform: hovered ? 'scale(1.1)' : 'scale(1)',
     boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.2)' : 'none',
     transition: 'background 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s',
+    marginLeft:  dir === 'left'  ? '8px' : undefined,
+    marginRight: dir === 'right' ? '8px' : undefined,
   })
 
+  const showLeft  = offset > 0
+  const showRight = offset < maxOffset
+
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Clipping container — hides overflow */}
-      <div ref={outerRef} style={{ overflow: 'hidden', height: '200px' }}>
-        {/* Track — slides via CSS transform */}
-        <div
-          ref={trackRef}
-          style={{
-            display: 'flex',
-            gap: '6px',
-            height: '100%',
-            transform: `translateX(-${offset}px)`,
-            transition: 'transform 0.48s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            willChange: 'transform',
-          }}
-        >
-          {livros.map(livro => (
-            <div
-              key={livro.isbn}
-              style={{ height: '100%', flexShrink: 0, borderRadius: '3px', overflow: 'hidden', background: 'var(--surface)' }}
-            >
-              {livro.capa_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={livro.capa_url}
-                  alt={livro.titulo}
+    <>
+      <div style={{ position: 'relative' }}>
+        {/* Clipping container */}
+        <div ref={outerRef} style={{ overflow: 'hidden', height: '200px' }}>
+          {/* Moving track */}
+          <div
+            ref={trackRef}
+            style={{
+              display: 'flex',
+              gap: '6px',
+              height: '100%',
+              transform: `translateX(-${offset}px)`,
+              transition: 'transform 0.48s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+              willChange: 'transform',
+            }}
+          >
+            {livros.map(livro => {
+              const hovered = hoveredIsbn === livro.isbn
+              return (
+                <div
+                  key={livro.isbn}
+                  onClick={() => openModal(livro)}
+                  onMouseEnter={() => setHoveredIsbn(livro.isbn)}
+                  onMouseLeave={() => setHoveredIsbn(null)}
                   title={livro.titulo}
-                  style={{ height: '100%', width: 'auto', display: 'block', objectFit: 'cover' }}
-                  loading="lazy"
-                />
-              )}
-            </div>
-          ))}
+                  style={{
+                    height: '100%',
+                    flexShrink: 0,
+                    borderRadius: '3px',
+                    overflow: 'hidden',
+                    background: 'var(--bg)',
+                    cursor: 'pointer',
+                    transform: hovered ? 'scale(1.04)' : 'scale(1)',
+                    transition: 'transform 0.15s',
+                    transformOrigin: 'center bottom',
+                  }}
+                >
+                  {livro.capa_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={livro.capa_url}
+                      alt={livro.titulo}
+                      style={{ height: '100%', width: 'auto', display: 'block', objectFit: 'cover' }}
+                      loading="lazy"
+                      onLoad={() => {
+                        const outer = outerRef.current
+                        const track = trackRef.current
+                        if (outer && track) setMaxOffset(Math.max(0, track.scrollWidth - outer.clientWidth))
+                      }}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
+
+        {/* Left fade + arrow */}
+        {showLeft && (
+          <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '70px', background: 'linear-gradient(to right, var(--bg) 25%, transparent)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+            <button
+              onClick={() => slide('left')}
+              onMouseEnter={() => setLeftHover(true)}
+              onMouseLeave={() => setLeftHover(false)}
+              style={arrowBtn('left', leftHover)}
+            >
+              ‹
+            </button>
+          </div>
+        )}
+
+        {/* Right fade + arrow */}
+        {showRight && (
+          <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '70px', background: 'linear-gradient(to left, var(--bg) 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', pointerEvents: 'none' }}>
+            <button
+              onClick={() => slide('right')}
+              onMouseEnter={() => setRightHover(true)}
+              onMouseLeave={() => setRightHover(false)}
+              style={arrowBtn('right', rightHover)}
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Left fade + arrow */}
-      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '70px', background: 'linear-gradient(to right, var(--bg) 25%, transparent)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
-        <button
-          onClick={() => slide('left')}
-          onMouseEnter={() => setLeftHover(true)}
-          onMouseLeave={() => setLeftHover(false)}
-          style={{ ...arrowStyle(leftHover), marginLeft: '8px' }}
-        >
-          ‹
-        </button>
-      </div>
-
-      {/* Right fade + arrow */}
-      <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '70px', background: 'linear-gradient(to left, var(--bg) 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', pointerEvents: 'none' }}>
-        <button
-          onClick={() => slide('right')}
-          onMouseEnter={() => setRightHover(true)}
-          onMouseLeave={() => setRightHover(false)}
-          style={{ ...arrowStyle(rightHover), marginRight: '8px' }}
-        >
-          ›
-        </button>
-      </div>
-    </div>
+      {modal && (
+        <DetalheModal
+          key={modalKey}
+          target={modal}
+          onClose={() => setModal(null)}
+        />
+      )}
+    </>
   )
 }

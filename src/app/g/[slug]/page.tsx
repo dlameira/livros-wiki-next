@@ -27,6 +27,7 @@ type Selo = {
 }
 
 type Livro = {
+  id: number
   isbn: string
   titulo: string
   editora: string
@@ -117,7 +118,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   if (nomesSelos.length > 0) {
     const filter = encodeURIComponent(JSON.stringify({ editora: { _in: nomesSelos }, capa_url: { _nnull: true } }))
     const res = await fetch(
-      `${DIRECTUS_URL}/items/biblioteca?fields=isbn,titulo,editora,capa_url&sort=-data_publicacao&limit=24&filter=${filter}`
+      `${DIRECTUS_URL}/items/biblioteca?fields=id,isbn,titulo,editora,capa_url&sort=-data_publicacao&limit=100&filter=${filter}`
     )
     mosaico = (await res.json()).data || []
   }
@@ -200,7 +201,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
       {mosaico.length > 0 && (
         <div style={{ padding: '48px 64px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontSize: '0.7rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
-            lançamentos recentes
+            novos livros
           </div>
           <MosaicoScroll livros={mosaico} />
         </div>
