@@ -1196,6 +1196,23 @@ export const SELO_IG_STATS: Record<string, { seg: string; posts: string; bio: st
   'editoraminotauro':       { seg: '72K',  posts: '1.800', bio: 'Fantasia e ficção científica 🐉' },
 }
 
+// ─── Descrições dos grupos editoriais ────────────────────────────────────────
+export const GRUPO_DESCRICAO: Record<string, string> = {
+  'Record': 'Fundado em 1942 no Rio de Janeiro, o Grupo Record é um dos maiores grupos editoriais do Brasil. Com mais de 20 selos, publica desde bestsellers internacionais e literatura de massa até obras de referência acadêmica, literatura infantojuvenil e pensamento crítico. O grupo controla nomes históricos como Bertrand Brasil, José Olympio, Civilização Brasileira e Galera.',
+  'GMT Editores': 'O Grupo GMT reúne a Editora Sextante e a Arqueiro, duas das editoras independentes mais bem-sucedidas do Brasil. Com foco em autoajuda, espiritualidade e ficção de entretenimento, o grupo lançou alguns dos maiores fenômenos editoriais dos últimos anos — de O Poder do Agora a Hábitos Atômicos.',
+  'Grupo Companhia das Letras': 'Fundado em 1986 por Luiz Schwarcz, o Grupo Companhia das Letras tornou-se referência em qualidade editorial no Brasil. Publica desde literatura estrangeira de prestígio até ficção brasileira contemporânea, com destaque para a Companhia das Letras, Penguin, Claro Enigma e Objetiva.',
+  'Grupo Globo': 'O braço editorial do Grupo Globo reúne selos focados em entretenimento, cultura pop e literatura de qualidade. Com títulos ligados ao universo de suas produções audiovisuais e um portfólio crescente em literatura adulta e jovem, incluindo Globo Livros, Biblioteca Azul e Alt.',
+  'Grupo Autêntica': 'Fundado em Belo Horizonte em 1997, o Grupo Autêntica consolidou-se como referência em pedagogia, ciências humanas e ficção literária. Reúne selos como Autêntica, Vestígio, Nemo e Moinhos, com catálogo que vai do true crime à literatura africana.',
+  'Grupo Rocco': 'Fundado em 1975, o Grupo Rocco é uma das editoras literárias mais respeitadas do Brasil. Publica autores brasileiros premiados e grandes nomes da ficção internacional. A Fantástica Rocco expande o portfólio para fantasia e ficção científica de qualidade.',
+  'HarperCollins': 'Braço brasileiro da segunda maior editora do mundo. Com mais de 130 lançamentos anuais desde 2005, destaca-se em finanças pessoais com A Psicologia Financeira e em ficção popular. A Harlequin reforça o portfólio com romance e dark romance.',
+  'Grupo Planeta': 'Subsidiária do Grupo Planeta, um dos maiores conglomerados editoriais do mundo com sede em Barcelona. Atua no Brasil com bestsellers internacionais de ficção e não-ficção, além de nichos como ficção especulativa (Minotauro) e negócios (Estratégia).',
+  'Grupo Intrínseca': 'Fundada em 2007 no Rio de Janeiro, a Intrínseca tornou-se uma das cinco maiores editoras do Brasil em menos de duas décadas. Responsável por fenômenos como Cinquenta Tons de Cinza, Colleen Hoover e Outlive, é referência em detecção e lançamento de tendências.',
+  'Darkside Books': 'Editora especializada em horror, ficção científica e cultura pop fundada em 2012. Conhecida por suas edições de luxo e pela comunidade fiel de leitores, a Darkside é referência no segmento de livros de nicho no Brasil, com Stephen King, H.P. Lovecraft e cultura geek.',
+  'Todavia': 'Editora literária independente fundada em São Paulo em 2016. Com catálogo cuidadosamente curado de ficção e não-ficção, a Todavia ganhou prestígio rapidamente com títulos de alta qualidade, incluindo obras de autores brasileiros e internacionais de destaque.',
+  'Editora Aleph': 'Especializada em ficção científica e fantasia desde 1979, a Aleph é a editora mais longeva do gênero no Brasil. Publica autores como Philip K. Dick, Isaac Asimov e Frank Herbert, além de uma forte linha de não-ficção científica e popular.',
+  'Fósforo Editora': 'Fundada em 2020, a Fósforo rapidamente se tornou referência em literatura contemporânea de qualidade. É a casa brasileira de Annie Ernaux (Nobel 2022) e Han Kang (Nobel 2024), com catálogo que combina ficção, ensaio e divulgação científica com rigor intelectual.',
+}
+
 // ─── Logos CDN por selo ───────────────────────────────────────────────────────
 // Logos do Grupo Record (cdn.record.com.br — verificados)
 export const SELO_LOGOS_FALLBACK: Record<string, string> = {

@@ -1,7 +1,8 @@
 import { DIRECTUS_URL } from '@/lib/directus'
-import { SELO_INFO, HITS, SELO_LOGOS_FALLBACK, SELO_INSTAGRAM } from '@/lib/selos-data'
+import { SELO_INFO, HITS, SELO_LOGOS_FALLBACK, SELO_INSTAGRAM, GRUPO_DESCRICAO } from '@/lib/selos-data'
 import { notFound } from 'next/navigation'
 import SelosGrid, { type SeloEnriquecido, type Capa } from './SelosGrid'
+import MosaicoScroll from './MosaicoScroll'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,7 +80,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
       }))
 
       const [coversRes, countRes, lancRes, prevRes] = await Promise.all([
-        fetch(`${DIRECTUS_URL}/items/biblioteca?fields=isbn,titulo,capa_url&sort=-data_publicacao&limit=16&filter=${filterCovers}`),
+        fetch(`${DIRECTUS_URL}/items/biblioteca?fields=id,isbn,titulo,capa_url&sort=-data_publicacao&limit=16&filter=${filterCovers}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterCount}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterLanc}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterPrev}`),
@@ -154,6 +155,11 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
           <div style={{ fontSize: '0.85rem', color: 'var(--muted)', fontStyle: 'italic' }}>
             {selosAtivos.length} selos ativos · {totalLivros.toLocaleString('pt-BR')} títulos catalogados
           </div>
+          {GRUPO_DESCRICAO[grupo.nome] && (
+            <div style={{ marginTop: '20px', maxWidth: '600px', fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.75, borderLeft: '2px solid var(--border)', paddingLeft: '16px' }}>
+              {GRUPO_DESCRICAO[grupo.nome]}
+            </div>
+          )}
         </div>
       </div>
 
@@ -187,22 +193,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
           <div style={{ fontSize: '0.7rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
             lançamentos recentes
           </div>
-          <div style={{ display: 'flex', gap: '6px', height: '200px', overflow: 'hidden' }}>
-            {mosaico.map(livro => (
-              <div key={livro.isbn} style={{ height: '100%', flexShrink: 0, borderRadius: '3px', overflow: 'hidden', background: 'var(--surface)' }}>
-                {livro.capa_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={livro.capa_url}
-                    alt={livro.titulo}
-                    title={livro.titulo}
-                    style={{ height: '100%', width: 'auto', display: 'block', objectFit: 'cover' }}
-                    loading="lazy"
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+          <MosaicoScroll livros={mosaico} />
         </div>
       )}
 
