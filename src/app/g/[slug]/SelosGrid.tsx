@@ -341,7 +341,21 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
                       <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
                     </svg>
                     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                      {igHandle ? (
+                      {isFallbackHandle ? (
+                        <>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontStyle: 'italic', marginBottom: '4px' }}>
+                            sem instagram próprio
+                          </div>
+                          <a
+                            href={`https://instagram.com/${igHandle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ fontSize: '0.65rem', color: 'var(--muted)', textDecoration: 'none', opacity: 0.6 }}
+                          >
+                            ver @{igHandle} →
+                          </a>
+                        </>
+                      ) : igHandle ? (
                         <>
                           <a
                             href={`https://instagram.com/${igHandle}`}
@@ -364,11 +378,6 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
                                 </div>
                               )}
                             </>
-                          )}
-                          {isFallbackHandle && (
-                            <div style={{ fontSize: '0.63rem', color: 'var(--muted)', opacity: 0.6, fontStyle: 'italic' }}>
-                              perfil do grupo
-                            </div>
                           )}
                         </>
                       ) : (
