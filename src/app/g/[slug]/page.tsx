@@ -529,11 +529,11 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
               <div
                 key={selo.id}
                 style={{
-                  background: 'var(--surface)',
+                  background: isInativo ? 'rgba(192,57,43,0.04)' : 'var(--surface)',
                   padding: '32px',
-                  border: '1px solid var(--border)',
+                  border: isInativo ? '1px solid rgba(192,57,43,0.25)' : '1px solid var(--border)',
                   position: 'relative',
-                  opacity: isInativo ? 0.65 : 1,
+                  opacity: isInativo ? 0.7 : 1,
                 }}
               >
                 {isInativo && (
