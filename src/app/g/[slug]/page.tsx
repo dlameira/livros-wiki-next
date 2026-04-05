@@ -46,23 +46,21 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   )
   const selos: Selo[] = ((await selosRes.json()).data || []).filter((s: Selo) => s.nome_display)
 
-  const selosAtivos = selos.filter(s => s.ativo)
-  const selosInativos = selos.filter(s => !s.ativo)
-
   // Datas para classificação de atividade
   const hoje = new Date().toISOString().slice(0, 10)
   const seisAtras = new Date()
   seisAtras.setMonth(seisAtras.getMonth() - 6)
   const seisAtrasStr = seisAtras.toISOString().slice(0, 10)
 
-  // Fetch covers + contagens por selo ativo em paralelo
+  // Fetch covers + contagens para TODOS os selos em paralelo
+  // Ativo/inativo é definido dinamicamente: nLanc > 0 || nPrev > 0
   const livrosPorSelo: Record<string, Capa[]> = {}
   const contagemPorSelo: Record<string, number> = {}
   const lancPorSelo: Record<string, number> = {}
   const prevPorSelo: Record<string, number> = {}
 
   await Promise.all(
-    selosAtivos.map(async (selo) => {
+    selos.map(async (selo) => {
       const filterCovers = encodeURIComponent(JSON.stringify({
         _and: [{ editora: { _eq: selo.nome_display } }, { capa_url: { _nnull: true } }]
       }))
@@ -94,18 +92,9 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
     })
   )
 
-  // Selos inativos: só contagem
-  await Promise.all(
-    selosInativos.map(async (selo) => {
-      if (selo.total_livros_mb && selo.total_livros_mb > 0) {
-        contagemPorSelo[selo.nome_display] = selo.total_livros_mb
-      } else {
-        const filterCount = encodeURIComponent(JSON.stringify({ editora: { _eq: selo.nome_display } }))
-        const countRes = await fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterCount}`)
-        contagemPorSelo[selo.nome_display] = (await countRes.json()).meta?.filter_count || 0
-      }
-    })
-  )
+  // Ativo = tem lançamento nos últimos 6 meses OU livro em pré-venda
+  const selosAtivos = selos.filter(s => (lancPorSelo[s.nome_display] || 0) > 0 || (prevPorSelo[s.nome_display] || 0) > 0)
+  const selosInativos = selos.filter(s => (lancPorSelo[s.nome_display] || 0) === 0 && (prevPorSelo[s.nome_display] || 0) === 0)
 
   const totalLivros = Object.values(contagemPorSelo).reduce((sum, n) => sum + n, 0)
 
@@ -121,12 +110,15 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   }
 
   // Monta array enriquecido para o componente client
-  const selosEnriquecidos: SeloEnriquecido[] = [...selosAtivos, ...selosInativos].map(selo => {
+  // ativo = calculado dinamicamente (nLanc > 0 || nPrev > 0), não o campo do Directus
+  const selosEnriquecidos: SeloEnriquecido[] = selos.map(selo => {
+    const nLanc = lancPorSelo[selo.nome_display] || 0
+    const nPrev = prevPorSelo[selo.nome_display] || 0
     const info = SELO_INFO[selo.nome_display]
     return {
       id: selo.id,
       nome_display: selo.nome_display,
-      ativo: selo.ativo,
+      ativo: nLanc > 0 || nPrev > 0,
       logoUrl: selo.logo_url || SELO_LOGOS_FALLBACK[selo.nome_display] || null,
       descricao: selo.descricao || info?.desc || null,
       tag: info?.tag || null,

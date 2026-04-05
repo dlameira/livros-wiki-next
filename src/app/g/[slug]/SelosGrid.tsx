@@ -30,20 +30,12 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
   const [sort, setSort] = useState<SortKey>('default')
 
   const sorted = useMemo(() => {
-    // 3 níveis: 0 = ativo com atividade, 1 = sem lançamentos, 2 = inativo formal
-    const tier = (s: SeloEnriquecido) => {
-      if (s.ativo !== true) return 2
-      if (s.nLanc === 0 && s.nPrev === 0) return 1
-      return 0
-    }
-
     return [...selos].sort((a, b) => {
-      const ta = tier(a)
-      const tb = tier(b)
-      if (ta !== tb) return ta - tb
+      // Inativos sempre no final (ativo = nLanc > 0 || nPrev > 0)
+      if (a.ativo !== b.ativo) return a.ativo ? -1 : 1
 
-      // Dentro do mesmo tier: critério selecionado (só faz sentido no tier 0)
-      if (ta === 0) {
+      // Entre ativos: critério selecionado
+      if (a.ativo && b.ativo) {
         if (sort === 'catalogo')    return b.count - a.count
         if (sort === 'lancamentos') return b.nLanc - a.nLanc
         if (sort === 'prevenda')    return b.nPrev - a.nPrev
@@ -91,7 +83,6 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '2px' }}>
         {sorted.map(selo => {
           const isInativo = !selo.ativo
-          const semLancamentos = !isInativo && selo.nLanc === 0 && selo.nPrev === 0
           const igStats = selo.igHandle ? (SELO_IG_STATS[selo.igHandle] || null) : null
 
           return (
@@ -105,7 +96,7 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
                 opacity: isInativo ? 0.7 : 1,
               }}
             >
-              {/* Badge inativo / sem lançamentos */}
+              {/* Badge inativo */}
               {isInativo && (
                 <div style={{
                   position: 'absolute', top: '14px', right: '14px',
@@ -113,17 +104,7 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
                   color: '#c0392b', border: '1px solid #c0392b', background: 'rgba(192,57,43,0.08)',
                   padding: '2px 7px', borderRadius: '3px',
                 }}>
-                  inativo
-                </div>
-              )}
-              {semLancamentos && (
-                <div style={{
-                  position: 'absolute', top: '14px', right: '14px',
-                  fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase',
-                  color: '#888', border: '1px solid #555', background: 'rgba(100,100,100,0.08)',
-                  padding: '2px 7px', borderRadius: '3px',
-                }}>
-                  sem lançamentos
+                  sem atividade
                 </div>
               )}
 
