@@ -75,8 +75,6 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
 
   const sortedSelos = [...selosAtivos, ...selosInativos]
 
-  const s = (val: string | number | object) => val as React.CSSProperties
-
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Georgia, serif' }}>
 
@@ -165,7 +163,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
               <div
                 key={selo.id}
                 style={{
-                  background: isInativo ? (s('var(--surface)')) : 'var(--surface)',
+                  background: 'var(--surface)',
                   padding: '32px',
                   border: '1px solid var(--border)',
                   position: 'relative',
