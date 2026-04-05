@@ -1229,7 +1229,7 @@ export const SELO_LOGOS_FALLBACK: Record<string, string> = {
   'José Olympio':           'https://cdn.record.com.br/wp-content/uploads/2019/06/26030051/logo-jose-olympio.png',
   'Rosa dos Tempos':        'https://cdn.record.com.br/wp-content/uploads/2019/06/26030047/logo-rosa-dos-tempos.png',
   'Civilização Brasileira': 'https://cdn.record.com.br/wp-content/uploads/2019/06/26030054/logo-civilizacao-brasileira.png',
-  'Paz & Terra':            'https://cdn.record.com.br/wp-content/uploads/2019/06/26030049/logo-paz-e-terra.png',
+  'Paz & Terra':            'https://cdn.record.com.br/wp-content/uploads/2019/08/25181701/paz_e_terra.png',
   'Difel':                  'https://cdn.record.com.br/wp-content/uploads/2019/06/26030052/logo-difel.png',
   'Amarcord':               'https://cdn.record.com.br/wp-content/uploads/2023/11/24111333/Logo-Amarcord-p.png',
   'Viva Livros':            'https://cdn.record.com.br/wp-content/uploads/2019/08/25181657/viva_livros.png',
