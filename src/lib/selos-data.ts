@@ -1215,4 +1215,6 @@ export const SELO_LOGOS_FALLBACK: Record<string, string> = {
   'Paz & Terra':            'https://cdn.record.com.br/wp-content/uploads/2019/06/26030049/logo-paz-e-terra.png',
   'Difel':                  'https://cdn.record.com.br/wp-content/uploads/2019/06/26030052/logo-difel.png',
   'Amarcord':               'https://cdn.record.com.br/wp-content/uploads/2023/11/24111333/Logo-Amarcord-p.png',
+  'Viva Livros':            'https://cdn.record.com.br/wp-content/uploads/2019/08/25181657/viva_livros.png',
+  'Nova Era':               'https://cdn.record.com.br/wp-content/uploads/2019/08/25181657/nova_era.png',
 }
