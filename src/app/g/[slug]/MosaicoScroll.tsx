@@ -9,26 +9,30 @@ type LivroMosaico = {
 }
 
 export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const outerRef = useRef<HTMLDivElement>(null)   // clipping container
+  const trackRef = useRef<HTMLDivElement>(null)   // moving track
+  const [offset, setOffset] = useState(0)
   const [leftHover,  setLeftHover]  = useState(false)
   const [rightHover, setRightHover] = useState(false)
 
-  function scroll(dir: 'left' | 'right') {
-    if (!scrollRef.current) return
-    const container = scrollRef.current
-    // Snap to exact page boundaries for a clean slide feel
-    const pageW = container.clientWidth - 60          // small overlap so context is kept
-    const cur   = container.scrollLeft
-    const target = dir === 'right'
-      ? Math.round(cur / pageW + 1) * pageW
-      : Math.round(cur / pageW - 1) * pageW
-    container.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
+  function slide(dir: 'left' | 'right') {
+    const outer = outerRef.current
+    const track = trackRef.current
+    if (!outer || !track) return
+    const pageW  = outer.clientWidth * 0.85
+    const maxOff = Math.max(0, track.scrollWidth - outer.clientWidth)
+    setOffset(prev =>
+      dir === 'right'
+        ? Math.min(prev + pageW, maxOff)
+        : Math.max(prev - pageW, 0)
+    )
   }
 
-  const arrowBase: React.CSSProperties = {
+  const arrowStyle = (hovered: boolean): React.CSSProperties => ({
     pointerEvents: 'all',
+    background: hovered ? 'var(--text)' : 'var(--surface)',
     border: '1px solid var(--border)',
-    color: 'var(--text)',
+    color: hovered ? 'var(--bg)' : 'var(--text)',
     width: '36px', height: '36px',
     borderRadius: '50%',
     cursor: 'pointer',
@@ -36,83 +40,67 @@ export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '1.3rem',
-    lineHeight: 1,
-    transition: 'background 0.15s, transform 0.15s, box-shadow 0.15s',
-  }
+    lineHeight: '1',
+    transform: hovered ? 'scale(1.1)' : 'scale(1)',
+    boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.2)' : 'none',
+    transition: 'background 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s',
+  })
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Scrollable strip — CSS smooth scroll + snap */}
-      <div
-        ref={scrollRef}
-        style={{
-          display: 'flex',
-          gap: '6px',
-          height: '200px',
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          scrollSnapType: 'x mandatory',
-        } as React.CSSProperties}
-      >
-        {livros.map(livro => (
-          <div
-            key={livro.isbn}
-            style={{
-              height: '100%',
-              flexShrink: 0,
-              borderRadius: '3px',
-              overflow: 'hidden',
-              background: 'var(--surface)',
-              scrollSnapAlign: 'start',
-            } as React.CSSProperties}
-          >
-            {livro.capa_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={livro.capa_url}
-                alt={livro.titulo}
-                title={livro.titulo}
-                style={{ height: '100%', width: 'auto', display: 'block', objectFit: 'cover' }}
-                loading="lazy"
-              />
-            )}
-          </div>
-        ))}
+      {/* Clipping container — hides overflow */}
+      <div ref={outerRef} style={{ overflow: 'hidden', height: '200px' }}>
+        {/* Track — slides via CSS transform */}
+        <div
+          ref={trackRef}
+          style={{
+            display: 'flex',
+            gap: '6px',
+            height: '100%',
+            transform: `translateX(-${offset}px)`,
+            transition: 'transform 0.48s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            willChange: 'transform',
+          }}
+        >
+          {livros.map(livro => (
+            <div
+              key={livro.isbn}
+              style={{ height: '100%', flexShrink: 0, borderRadius: '3px', overflow: 'hidden', background: 'var(--surface)' }}
+            >
+              {livro.capa_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={livro.capa_url}
+                  alt={livro.titulo}
+                  title={livro.titulo}
+                  style={{ height: '100%', width: 'auto', display: 'block', objectFit: 'cover' }}
+                  loading="lazy"
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Left fade + arrow */}
-      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '70px', background: 'linear-gradient(to right, var(--bg) 30%, transparent)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '70px', background: 'linear-gradient(to right, var(--bg) 25%, transparent)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
         <button
-          onClick={() => scroll('left')}
+          onClick={() => slide('left')}
           onMouseEnter={() => setLeftHover(true)}
           onMouseLeave={() => setLeftHover(false)}
-          style={{
-            ...arrowBase,
-            marginLeft: '8px',
-            background: leftHover ? 'var(--text)' : 'var(--surface)',
-            color: leftHover ? 'var(--bg)' : 'var(--text)',
-            transform: leftHover ? 'scale(1.12)' : 'scale(1)',
-            boxShadow: leftHover ? '0 4px 16px rgba(0,0,0,0.18)' : 'none',
-          }}
+          style={{ ...arrowStyle(leftHover), marginLeft: '8px' }}
         >
           ‹
         </button>
       </div>
 
       {/* Right fade + arrow */}
-      <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '70px', background: 'linear-gradient(to left, var(--bg) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '70px', background: 'linear-gradient(to left, var(--bg) 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', pointerEvents: 'none' }}>
         <button
-          onClick={() => scroll('right')}
+          onClick={() => slide('right')}
           onMouseEnter={() => setRightHover(true)}
           onMouseLeave={() => setRightHover(false)}
-          style={{
-            ...arrowBase,
-            marginRight: '8px',
-            background: rightHover ? 'var(--text)' : 'var(--surface)',
-            color: rightHover ? 'var(--bg)' : 'var(--text)',
-            transform: rightHover ? 'scale(1.12)' : 'scale(1)',
-            boxShadow: rightHover ? '0 4px 16px rgba(0,0,0,0.18)' : 'none',
-          }}
+          style={{ ...arrowStyle(rightHover), marginRight: '8px' }}
         >
           ›
         </button>
