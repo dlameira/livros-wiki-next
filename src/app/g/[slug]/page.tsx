@@ -49,6 +49,8 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
 
   // Datas para classificação de atividade
   const hoje = new Date().toISOString().slice(0, 10)
+  const anoAtual = new Date().getFullYear()
+  const anoInicioStr = `${anoAtual}-01-01`
   const seisAtras = new Date()
   seisAtras.setMonth(seisAtras.getMonth() - 6)
   const seisAtrasStr = seisAtras.toISOString().slice(0, 10)
@@ -59,6 +61,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   const contagemPorSelo: Record<string, number> = {}
   const lancPorSelo: Record<string, number> = {}
   const prevPorSelo: Record<string, number> = {}
+  const lancAnoPorSelo: Record<string, number> = {}
 
   await Promise.all(
     selos.map(async (selo) => {
@@ -78,26 +81,35 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
           { data_publicacao: { _gt: hoje } },
         ]
       }))
+      const filterLancAno = encodeURIComponent(JSON.stringify({
+        _and: [
+          { editora: { _eq: selo.nome_display } },
+          { data_publicacao: { _gte: anoInicioStr, _lte: hoje } },
+        ]
+      }))
 
-      const [coversRes, countRes, lancRes, prevRes] = await Promise.all([
+      const [coversRes, countRes, lancRes, prevRes, lancAnoRes] = await Promise.all([
         fetch(`${DIRECTUS_URL}/items/biblioteca?fields=id,isbn,titulo,capa_url&sort=-data_publicacao&limit=16&filter=${filterCovers}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterCount}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterLanc}`),
         fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterPrev}`),
+        fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filterLancAno}`),
       ])
 
-      livrosPorSelo[selo.nome_display] = (await coversRes.json()).data || []
-      contagemPorSelo[selo.nome_display] = (await countRes.json()).meta?.filter_count || 0
-      lancPorSelo[selo.nome_display] = (await lancRes.json()).meta?.filter_count || 0
-      prevPorSelo[selo.nome_display] = (await prevRes.json()).meta?.filter_count || 0
+      livrosPorSelo[selo.nome_display]    = (await coversRes.json()).data || []
+      contagemPorSelo[selo.nome_display]  = (await countRes.json()).meta?.filter_count || 0
+      lancPorSelo[selo.nome_display]      = (await lancRes.json()).meta?.filter_count || 0
+      prevPorSelo[selo.nome_display]      = (await prevRes.json()).meta?.filter_count || 0
+      lancAnoPorSelo[selo.nome_display]   = (await lancAnoRes.json()).meta?.filter_count || 0
     })
   )
 
   // Ativo = tem lançamento nos últimos 6 meses OU livro em pré-venda
   const selosAtivos = selos.filter(s => (lancPorSelo[s.nome_display] || 0) > 0 || (prevPorSelo[s.nome_display] || 0) > 0)
-  const selosInativos = selos.filter(s => (lancPorSelo[s.nome_display] || 0) === 0 && (prevPorSelo[s.nome_display] || 0) === 0)
 
-  const totalLivros = Object.values(contagemPorSelo).reduce((sum, n) => sum + n, 0)
+  const totalLivros  = Object.values(contagemPorSelo).reduce((sum, n) => sum + n, 0)
+  const totalLancAno = Object.values(lancAnoPorSelo).reduce((sum, n) => sum + n, 0)
+  const totalPrev    = Object.values(prevPorSelo).reduce((sum, n) => sum + n, 0)
 
   // Mosaico de capas recentes
   const nomesSelos = selos.map(s => s.nome_display)
@@ -152,11 +164,8 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
           <h1 style={{ fontSize: '3rem', fontWeight: 'normal', letterSpacing: '0.04em', color: 'var(--text)', lineHeight: 1, marginBottom: '10px' }}>
             {grupo.nome}
           </h1>
-          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', fontStyle: 'italic' }}>
-            {selosAtivos.length} selos ativos · {totalLivros.toLocaleString('pt-BR')} títulos catalogados
-          </div>
           {GRUPO_DESCRICAO[grupo.nome] && (
-            <div style={{ marginTop: '20px', maxWidth: '600px', fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.75, borderLeft: '2px solid var(--border)', paddingLeft: '16px' }}>
+            <div style={{ marginTop: '16px', maxWidth: '580px', fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.75, borderLeft: '2px solid var(--border)', paddingLeft: '16px' }}>
               {GRUPO_DESCRICAO[grupo.nome]}
             </div>
           )}
@@ -167,9 +176,9 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
       <div style={{ display: 'flex', padding: '36px 64px', borderBottom: '1px solid var(--border)' }}>
         {[
           { num: selosAtivos.length, label: 'selos ativos' },
-          { num: selosInativos.length, label: 'selos inativos' },
           { num: totalLivros.toLocaleString('pt-BR'), label: 'títulos catalogados' },
-          { num: selos.length, label: 'total de selos' },
+          { num: totalLancAno.toLocaleString('pt-BR'), label: `lançamentos em ${anoAtual}` },
+          { num: totalPrev.toLocaleString('pt-BR'), label: 'em pré-venda' },
         ].map((stat, i, arr) => (
           <div key={i} style={{
             flex: 1,
