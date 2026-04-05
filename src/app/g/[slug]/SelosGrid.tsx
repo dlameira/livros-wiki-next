@@ -30,19 +30,24 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
   const [sort, setSort] = useState<SortKey>('default')
 
   const sorted = useMemo(() => {
+    // 3 níveis: 0 = ativo com atividade, 1 = sem lançamentos, 2 = inativo formal
+    const tier = (s: SeloEnriquecido) => {
+      if (s.ativo !== true) return 2
+      if (s.nLanc === 0 && s.nPrev === 0) return 1
+      return 0
+    }
+
     return [...selos].sort((a, b) => {
-      // Inativos sempre no final
-      const aAtivo = a.ativo === true
-      const bAtivo = b.ativo === true
-      if (aAtivo !== bAtivo) return aAtivo ? -1 : 1
+      const ta = tier(a)
+      const tb = tier(b)
+      if (ta !== tb) return ta - tb
 
-      // Entre inativos: ordem de chegada
-      if (!aAtivo && !bAtivo) return 0
-
-      // Entre ativos: critério selecionado
-      if (sort === 'catalogo')    return b.count - a.count
-      if (sort === 'lancamentos') return b.nLanc - a.nLanc
-      if (sort === 'prevenda')    return b.nPrev - a.nPrev
+      // Dentro do mesmo tier: critério selecionado (só faz sentido no tier 0)
+      if (ta === 0) {
+        if (sort === 'catalogo')    return b.count - a.count
+        if (sort === 'lancamentos') return b.nLanc - a.nLanc
+        if (sort === 'prevenda')    return b.nPrev - a.nPrev
+      }
       return 0
     })
   }, [selos, sort])
