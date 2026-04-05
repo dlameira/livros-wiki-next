@@ -30,17 +30,21 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
   const [sort, setSort] = useState<SortKey>('default')
 
   const sorted = useMemo(() => {
-    const ativos = selos.filter(s => s.ativo)
-    const inativos = selos.filter(s => !s.ativo)
+    return [...selos].sort((a, b) => {
+      // Inativos sempre no final
+      const aAtivo = a.ativo === true
+      const bAtivo = b.ativo === true
+      if (aAtivo !== bAtivo) return aAtivo ? -1 : 1
 
-    const sortFn = (a: SeloEnriquecido, b: SeloEnriquecido) => {
+      // Entre inativos: ordem de chegada
+      if (!aAtivo && !bAtivo) return 0
+
+      // Entre ativos: critério selecionado
       if (sort === 'catalogo')    return b.count - a.count
       if (sort === 'lancamentos') return b.nLanc - a.nLanc
       if (sort === 'prevenda')    return b.nPrev - a.nPrev
       return 0
-    }
-
-    return [...ativos.sort(sortFn), ...inativos]
+    })
   }, [selos, sort])
 
   const btnStyle = (key: SortKey): React.CSSProperties => ({
