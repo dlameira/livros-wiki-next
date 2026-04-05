@@ -1,7 +1,7 @@
 import { DIRECTUS_URL } from '@/lib/directus'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 function slugify(nome: string): string {
   return nome
@@ -31,11 +31,6 @@ type Livro = {
   data_publicacao: string
 }
 
-export async function generateStaticParams() {
-  const res = await fetch(`${DIRECTUS_URL}/items/grupos_editoriais?fields=nome&limit=100&sort=nome`)
-  const json = await res.json()
-  return (json.data || []).map((g: { nome: string }) => ({ slug: slugify(g.nome) }))
-}
 
 export default async function GrupoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
