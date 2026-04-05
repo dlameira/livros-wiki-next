@@ -12,17 +12,15 @@ function slugify(nome: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-type Grupo = {
-  id: number
-  nome: string
-  cor?: string
-}
+type Grupo = { id: number; nome: string; cor?: string }
 
 type Selo = {
   id: number
   nome_display: string
   total_livros_mb: number | null
   ativo: boolean
+  logo_url?: string | null
+  descricao?: string | null
 }
 
 type Livro = {
@@ -34,27 +32,21 @@ type Livro = {
 }
 
 export async function generateStaticParams() {
-  const res = await fetch(
-    `${DIRECTUS_URL}/items/grupos_editoriais?fields=nome&limit=100&sort=nome`
-  )
+  const res = await fetch(`${DIRECTUS_URL}/items/grupos_editoriais?fields=nome&limit=100&sort=nome`)
   const json = await res.json()
-  return (json.data || []).map((g: { nome: string }) => ({
-    slug: slugify(g.nome),
-  }))
+  return (json.data || []).map((g: { nome: string }) => ({ slug: slugify(g.nome) }))
 }
 
 export default async function GrupoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  const gruposRes = await fetch(
-    `${DIRECTUS_URL}/items/grupos_editoriais?fields=id,nome,cor&limit=100`
-  )
+  const gruposRes = await fetch(`${DIRECTUS_URL}/items/grupos_editoriais?fields=id,nome,cor&limit=100`)
   const grupos: Grupo[] = (await gruposRes.json()).data || []
   const grupo = grupos.find(g => slugify(g.nome) === slug)
   if (!grupo) notFound()
 
   const selosRes = await fetch(
-    `${DIRECTUS_URL}/items/selos?filter[grupo][_eq]=${grupo.id}&fields=id,nome_display,total_livros_mb,ativo&limit=200&sort=nome_display`
+    `${DIRECTUS_URL}/items/selos?filter[grupo][_eq]=${grupo.id}&fields=id,nome_display,total_livros_mb,ativo,logo_url,descricao&limit=200&sort=nome_display`
   )
   const selos: Selo[] = ((await selosRes.json()).data || []).filter((s: Selo) => s.nome_display)
 
@@ -62,28 +54,38 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   const selosInativos = selos.filter(s => !s.ativo)
   const totalLivros = selos.reduce((sum, s) => sum + (s.total_livros_mb || 0), 0)
 
-  const nomesSelos = selos.map(s => s.nome_display)
+  // Busca capas por selo em paralelo
   const livrosPorSelo: Record<string, Livro[]> = {}
+  await Promise.all(
+    selosAtivos.map(async (selo) => {
+      const filter = encodeURIComponent(JSON.stringify({ editora: { _eq: selo.nome_display } }))
+      const res = await fetch(
+        `${DIRECTUS_URL}/items/biblioteca?fields=isbn,titulo,editora,capa_url,data_publicacao&sort=-data_publicacao&limit=10&filter=${filter}`
+      )
+      const data = (await res.json()).data || []
+      livrosPorSelo[selo.nome_display] = data
+    })
+  )
 
+  // Mosaico: 12 livros mais recentes do grupo inteiro
+  const nomesSelos = selos.map(s => s.nome_display)
+  let mosaico: Livro[] = []
   if (nomesSelos.length > 0) {
-    const filter = encodeURIComponent(JSON.stringify({ editora: { _in: nomesSelos } }))
-    const livrosRes = await fetch(
-      `${DIRECTUS_URL}/items/biblioteca?fields=isbn,titulo,editora,capa_url,data_publicacao&sort=-data_publicacao&limit=600&filter=${filter}`
+    const filter = encodeURIComponent(JSON.stringify({ editora: { _in: nomesSelos }, capa_url: { _nnull: true } }))
+    const res = await fetch(
+      `${DIRECTUS_URL}/items/biblioteca?fields=isbn,titulo,editora,capa_url&sort=-data_publicacao&limit=20&filter=${filter}`
     )
-    const livros: Livro[] = (await livrosRes.json()).data || []
-    for (const livro of livros) {
-      if (!livrosPorSelo[livro.editora]) livrosPorSelo[livro.editora] = []
-      if (livrosPorSelo[livro.editora].length < 8) {
-        livrosPorSelo[livro.editora].push(livro)
-      }
-    }
+    mosaico = (await res.json()).data || []
   }
 
   const sortedSelos = [...selosAtivos, ...selosInativos]
 
+  const s = (val: string | number | object) => val as React.CSSProperties
+
   return (
-    <div>
-      {/* Hero */}
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Georgia, serif' }}>
+
+      {/* ── HERO ─────────────────────────────────────────── */}
       <div style={{
         padding: '64px 64px 48px',
         borderBottom: '1px solid var(--border)',
@@ -94,23 +96,10 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
         flexWrap: 'wrap',
       }}>
         <div>
-          <div style={{
-            fontSize: '0.7rem',
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            color: '#c0392b',
-            marginBottom: '12px',
-          }}>
+          <div style={{ fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c0392b', marginBottom: '12px' }}>
             grupo editorial
           </div>
-          <h1 style={{
-            fontSize: '3rem',
-            fontWeight: 'normal',
-            letterSpacing: '0.04em',
-            color: '#f5ede3',
-            lineHeight: 1,
-            marginBottom: '10px',
-          }}>
+          <h1 style={{ fontSize: '3rem', fontWeight: 'normal', letterSpacing: '0.04em', color: 'var(--text)', lineHeight: 1, marginBottom: '10px' }}>
             {grupo.nome}
           </h1>
           <div style={{ fontSize: '0.85rem', color: 'var(--muted)', fontStyle: 'italic' }}>
@@ -119,12 +108,8 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
         </div>
       </div>
 
-      {/* Stats row */}
-      <div style={{
-        display: 'flex',
-        padding: '36px 64px',
-        borderBottom: '1px solid var(--border)',
-      }}>
+      {/* ── STATS ────────────────────────────────────────── */}
+      <div style={{ display: 'flex', padding: '36px 64px', borderBottom: '1px solid var(--border)' }}>
         {[
           { num: selosAtivos.length, label: 'selos ativos' },
           { num: selosInativos.length, label: 'selos inativos' },
@@ -137,44 +122,47 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
             marginRight: i < arr.length - 1 ? '32px' : 0,
             borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
           }}>
-            <div style={{
-              fontSize: '2.4rem',
-              fontWeight: 'normal',
-              color: '#f0e8dc',
-              letterSpacing: '-0.02em',
-              lineHeight: 1,
-              marginBottom: '6px',
-            }}>
+            <div style={{ fontSize: '2.4rem', fontWeight: 'normal', color: 'var(--text)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: '6px' }}>
               {stat.num}
             </div>
-            <div style={{
-              fontSize: '0.75rem',
-              color: 'var(--muted)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {stat.label}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Selos grid */}
+      {/* ── MOSAICO ──────────────────────────────────────── */}
+      {mosaico.length > 0 && (
+        <div style={{ padding: '48px 64px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.7rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
+            lançamentos recentes
+          </div>
+          <div style={{ display: 'flex', gap: '6px', height: '200px', overflow: 'hidden' }}>
+            {mosaico.map(livro => (
+              <div key={livro.isbn} style={{ height: '100%', flexShrink: 0, borderRadius: '3px', overflow: 'hidden', background: 'var(--surface)' }}>
+                {livro.capa_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={livro.capa_url}
+                    alt={livro.titulo}
+                    title={livro.titulo}
+                    style={{ height: '100%', width: 'auto', display: 'block', objectFit: 'cover' }}
+                    loading="lazy"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── SELOS ────────────────────────────────────────── */}
       <div style={{ padding: '48px 64px 80px' }}>
-        <div style={{
-          fontSize: '0.7rem',
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'var(--muted)',
-          marginBottom: '24px',
-        }}>
+        <div style={{ fontSize: '0.7rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
           selos do grupo
         </div>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
-          gap: '2px',
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '2px' }}>
           {sortedSelos.map(selo => {
             const covers = livrosPorSelo[selo.nome_display] || []
             const isInativo = !selo.ativo
@@ -182,50 +170,60 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
               <div
                 key={selo.id}
                 style={{
-                  background: isInativo ? '#130d0d' : 'var(--surface)',
+                  background: isInativo ? (s('var(--surface)')) : 'var(--surface)',
                   padding: '32px',
-                  border: `1px solid ${isInativo ? 'rgba(192,57,43,0.22)' : 'var(--border)'}`,
+                  border: '1px solid var(--border)',
                   position: 'relative',
-                  opacity: isInativo ? 0.85 : 1,
+                  opacity: isInativo ? 0.6 : 1,
                 }}
               >
                 {isInativo && (
                   <div style={{
-                    position: 'absolute',
-                    top: '14px',
-                    right: '14px',
-                    fontSize: '0.58rem',
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: '#c0392b',
-                    border: '1px solid #c0392b',
-                    background: 'rgba(192,57,43,0.08)',
-                    padding: '2px 7px',
-                    borderRadius: '3px',
+                    position: 'absolute', top: '14px', right: '14px',
+                    fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase',
+                    color: '#c0392b', border: '1px solid #c0392b', background: 'rgba(192,57,43,0.08)',
+                    padding: '2px 7px', borderRadius: '3px',
                   }}>
                     inativo
                   </div>
                 )}
 
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  justifyContent: 'space-between',
-                  marginBottom: '20px',
-                  gap: '12px',
-                }}>
-                  <div style={{ fontSize: '1.1rem', letterSpacing: '0.03em', color: '#f0e8dc' }}>
+                {/* Logo */}
+                {selo.logo_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selo.logo_url}
+                    alt={selo.nome_display}
+                    style={{ maxHeight: '28px', maxWidth: '110px', width: 'auto', height: 'auto', display: 'block', marginBottom: '10px', opacity: 0.8 }}
+                  />
+                )}
+
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '16px', gap: '12px' }}>
+                  <div style={{ fontSize: '1.1rem', letterSpacing: '0.03em', color: 'var(--text)' }}>
                     {selo.nome_display}
                   </div>
                   <div style={{ flexShrink: 0 }}>
                     <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-                      <strong style={{ color: '#aaa', fontWeight: 'normal' }}>
+                      <strong style={{ color: 'var(--text)', fontWeight: 'normal' }}>
                         {(selo.total_livros_mb || 0).toLocaleString('pt-BR')}
                       </strong>{' '}títulos
                     </span>
                   </div>
                 </div>
 
+                {/* Descrição */}
+                {selo.descricao && (
+                  <div style={{
+                    fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '20px',
+                    fontStyle: 'italic',
+                    display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                  }}>
+                    {selo.descricao}
+                  </div>
+                )}
+
+                {/* Mini covers */}
                 {covers.length > 0 && (
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {covers.slice(0, 8).map(livro => (
@@ -233,12 +231,8 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
                         key={livro.isbn}
                         title={livro.titulo}
                         style={{
-                          width: '56px',
-                          height: '80px',
-                          background: '#1a1a1a',
-                          borderRadius: '3px',
-                          overflow: 'hidden',
-                          flexShrink: 0,
+                          width: '56px', height: '80px', background: 'var(--border)',
+                          borderRadius: '3px', overflow: 'hidden', flexShrink: 0,
                           border: '1px solid var(--border)',
                         }}
                       >
@@ -251,15 +245,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
                             loading="lazy"
                           />
                         ) : (
-                          <div style={{
-                            width: '100%',
-                            height: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#333',
-                            fontSize: '1.2rem',
-                          }}>
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: '1.2rem' }}>
                             ◻
                           </div>
                         )}
@@ -268,8 +254,8 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
                   </div>
                 )}
 
-                {covers.length === 0 && (
-                  <div style={{ fontSize: '0.72rem', color: '#444', fontStyle: 'italic' }}>
+                {!isInativo && covers.length === 0 && (
+                  <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontStyle: 'italic' }}>
                     sem títulos catalogados
                   </div>
                 )}
