@@ -367,14 +367,14 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
       {/* Autor */}
       <div style={{ padding: '12px 48px 0' }}>
-        <input type="text" value={buscaInput} onChange={e => handleBuscaInput(e.target.value)} placeholder="buscar título, autor ou editora…"
-          style={{ background:'transparent', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', fontWeight:500, padding:'5px 13px', borderRadius:20, outline:'none', width:180 }} />
+        <input type="text" value={buscaInput} onChange={e => handleBuscaInput(e.target.value)} placeholder="buscar"
+          style={{ background:'var(--surface)', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', fontWeight:400, padding:'5px 13px', borderRadius:20, outline:'none', width:140 }} />
       </div>
 
       {/* Status */}
-      <div style={{ padding: '20px 48px 0', display: 'flex', alignItems: 'baseline', gap: 8, minHeight: 40 }}>
+      <div style={{ padding: '20px 48px 0', display: 'flex', alignItems: 'baseline', gap: 6, minHeight: 28 }}>
         {!loading && total > 0 && <>
-          <span style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+          <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>
             {total.toLocaleString('pt-BR')}
           </span>
           <span style={{ fontSize: '0.68rem', color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>livros</span>
