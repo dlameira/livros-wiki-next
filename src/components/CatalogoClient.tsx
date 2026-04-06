@@ -394,7 +394,7 @@ function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
       style={{ cursor:'pointer', transform: hovered ? 'translateY(-4px)' : 'none', transition:'transform 0.15s' }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'2/3', background:'var(--bg)', borderRadius:4, overflow:'hidden', marginBottom:9 }}>
         {livro.capa_url
-          ? <img src={`/api/cover/${livro.isbn}?size=s`} alt={livro.titulo} loading="lazy" onLoad={() => setImgLoaded(true)}
+          ? <img src={`/api/cover/${livro.isbn}?size=m`} alt={livro.titulo} loading="lazy" onLoad={() => setImgLoaded(true)}
               style={{ position:'absolute', bottom:0, left:0, width:'100%', height:'auto', display:'block', opacity: imgLoaded ? 1 : 0, transition:'opacity 0.35s' }} />
           : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#333', fontSize:'2rem' }}>📖</div>
         }
