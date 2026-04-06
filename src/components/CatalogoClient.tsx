@@ -400,18 +400,18 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       {/* Painel de configurações */}
       {settingsOpen && (
         <div onClick={e => { if (e.target === e.currentTarget) setSettingsOpen(false) }}
-          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:400, display:'flex', justifyContent:'flex-end' }}>
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.22)', zIndex:400, display:'flex', justifyContent:'flex-end' }}>
           <div style={{
-            width: 300, maxWidth: '100vw', height: '100%',
+            width: 280, maxWidth: '100vw', height: '100%',
             background: '#fbf236', color: '#0f0f0f',
-            borderLeft: '2px solid #0f0f0f',
+            borderLeft: '1px solid rgba(0,0,0,0.14)',
             display: 'flex', flexDirection: 'column',
             fontFamily: 'var(--font-sans), sans-serif',
           }}>
             {/* Header do painel */}
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'20px 20px 14px', borderBottom:'1px solid rgba(0,0,0,0.18)', flexShrink:0 }}>
-              <span style={{ fontSize:'0.65rem', textTransform:'uppercase', letterSpacing:'0.14em', fontWeight:700 }}>configurações</span>
-              <button onClick={() => setSettingsOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'#0f0f0f', fontSize:'1.1rem', lineHeight:1, padding:4 }}>✕</button>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'22px 20px 16px', borderBottom:'1px solid rgba(0,0,0,0.08)', flexShrink:0 }}>
+              <span style={{ fontSize:'0.62rem', textTransform:'uppercase', letterSpacing:'0.12em', fontWeight:500, opacity:.5 }}>configurações</span>
+              <button onClick={() => setSettingsOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'#0f0f0f', fontSize:'1rem', lineHeight:1, padding:4, opacity:.4 }}>✕</button>
             </div>
 
             {/* Corpo com settings */}
@@ -525,9 +525,9 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
 function SettingRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding:'14px 20px', borderBottom:'1px solid rgba(0,0,0,0.12)' }}>
-      <div style={{ fontSize:'0.58rem', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:700, marginBottom:8, opacity:.55 }}>{label}</div>
-      <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>{children}</div>
+    <div style={{ padding:'16px 20px', borderBottom:'1px solid rgba(0,0,0,0.07)' }}>
+      <div style={{ fontSize:'0.6rem', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:500, marginBottom:10, opacity:.4 }}>{label}</div>
+      <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>{children}</div>
     </div>
   )
 }
@@ -535,12 +535,14 @@ function SettingRow({ label, children }: { label: string; children: React.ReactN
 function SettingBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick} style={{
-      padding:'3px 11px', borderRadius:20, border:'1px solid #0f0f0f', cursor:'pointer',
-      fontSize:'0.7rem', fontFamily:'inherit',
-      background: active ? '#0f0f0f' : 'transparent',
-      color:      active ? '#fbf236' : '#0f0f0f',
+      padding:'4px 12px', borderRadius:20, cursor:'pointer',
+      fontSize:'0.72rem', fontFamily:'inherit',
+      border: active ? '1px solid rgba(0,0,0,0.25)' : '1px solid transparent',
+      background: active ? 'rgba(0,0,0,0.08)' : 'transparent',
+      color: '#0f0f0f',
       fontWeight: active ? 600 : 400,
-      letterSpacing: '0.02em',
+      opacity: active ? 1 : 0.45,
+      letterSpacing: '0.01em',
     }}>{children}</button>
   )
 }
