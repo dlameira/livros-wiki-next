@@ -399,60 +399,56 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
       {/* Painel de configurações */}
       {settingsOpen && (
-        <>
-          <div onClick={() => setSettingsOpen(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 399 }} />
+        <div onClick={e => { if (e.target === e.currentTarget) setSettingsOpen(false) }}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:400, display:'flex', justifyContent:'flex-end' }}>
           <div style={{
-            position: 'fixed', top: 130, right: 48, zIndex: 400,
+            width: 300, maxWidth: '100vw', height: '100%',
             background: '#fbf236', color: '#0f0f0f',
-            border: '2px solid #0f0f0f', borderRadius: 4,
-            width: 272, overflow: 'hidden',
-            boxShadow: '4px 4px 0 #0f0f0f',
+            borderLeft: '2px solid #0f0f0f',
+            display: 'flex', flexDirection: 'column',
             fontFamily: 'var(--font-sans), sans-serif',
           }}>
             {/* Header do painel */}
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'11px 16px', borderBottom:'1px solid rgba(0,0,0,0.18)' }}>
-              <span style={{ fontSize:'0.6rem', textTransform:'uppercase', letterSpacing:'0.14em', fontWeight:700 }}>configurações</span>
-              <button onClick={() => setSettingsOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'#0f0f0f', fontSize:'1rem', lineHeight:1, padding:0 }}>✕</button>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'20px 20px 14px', borderBottom:'1px solid rgba(0,0,0,0.18)', flexShrink:0 }}>
+              <span style={{ fontSize:'0.65rem', textTransform:'uppercase', letterSpacing:'0.14em', fontWeight:700 }}>configurações</span>
+              <button onClick={() => setSettingsOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'#0f0f0f', fontSize:'1.1rem', lineHeight:1, padding:4 }}>✕</button>
             </div>
 
-            {/* Tema */}
-            <SettingRow label="tema" last={false}>
-              {(['light','dark'] as const).map(t => (
-                <SettingBtn key={t} active={tema === t} onClick={() => applyTema(t)}>
-                  {t === 'light' ? 'claro' : 'escuro'}
-                </SettingBtn>
-              ))}
-            </SettingRow>
+            {/* Corpo com settings */}
+            <div style={{ flex:1, overflowY:'auto', padding:'8px 0' }}>
+              <SettingRow label="tema">
+                {(['light','dark'] as const).map(t => (
+                  <SettingBtn key={t} active={tema === t} onClick={() => applyTema(t)}>
+                    {t === 'light' ? 'claro' : 'escuro'}
+                  </SettingBtn>
+                ))}
+              </SettingRow>
 
-            {/* Catálogo */}
-            <SettingRow label="catálogo" last={false}>
-              <SettingBtn active={!curadoria} onClick={() => setCuradoria(false)}>todas</SettingBtn>
-              <SettingBtn active={curadoria}  onClick={() => setCuradoria(true)}>curadoria</SettingBtn>
-            </SettingRow>
+              <SettingRow label="catálogo">
+                <SettingBtn active={!curadoria} onClick={() => setCuradoria(false)}>todas as editoras</SettingBtn>
+                <SettingBtn active={curadoria}  onClick={() => setCuradoria(true)}>curadoria</SettingBtn>
+              </SettingRow>
 
-            {/* Sem data */}
-            <SettingRow label="sem data de lançamento" last={false}>
-              <SettingBtn active={mostrarSemData}  onClick={() => setMostrarSemData(true)}>mostrar</SettingBtn>
-              <SettingBtn active={!mostrarSemData} onClick={() => setMostrarSemData(false)}>ocultar</SettingBtn>
-            </SettingRow>
+              <SettingRow label="livros sem data de lançamento">
+                <SettingBtn active={mostrarSemData}  onClick={() => setMostrarSemData(true)}>mostrar</SettingBtn>
+                <SettingBtn active={!mostrarSemData} onClick={() => setMostrarSemData(false)}>ocultar</SettingBtn>
+              </SettingRow>
 
-            {/* Sem capa */}
-            <SettingRow label="sem capa" last={false}>
-              <SettingBtn active={!ocultarSemImagem} onClick={() => setOcultarSemImagem(false)}>mostrar</SettingBtn>
-              <SettingBtn active={ocultarSemImagem}  onClick={() => setOcultarSemImagem(true)}>ocultar</SettingBtn>
-            </SettingRow>
+              <SettingRow label="livros sem capa">
+                <SettingBtn active={!ocultarSemImagem} onClick={() => setOcultarSemImagem(false)}>mostrar</SettingBtn>
+                <SettingBtn active={ocultarSemImagem}  onClick={() => setOcultarSemImagem(true)}>ocultar</SettingBtn>
+              </SettingRow>
 
-            {/* Grade */}
-            <SettingRow label="grade" last={true}>
-              {(['compacta','padrao','grande'] as const).map(g => (
-                <SettingBtn key={g} active={gridSize === g} onClick={() => setGridSize(g)}>
-                  {g === 'padrao' ? 'padrão' : g}
-                </SettingBtn>
-              ))}
-            </SettingRow>
+              <SettingRow label="grade">
+                {(['compacta','padrao','grande'] as const).map(g => (
+                  <SettingBtn key={g} active={gridSize === g} onClick={() => setGridSize(g)}>
+                    {g === 'padrao' ? 'padrão' : g}
+                  </SettingBtn>
+                ))}
+              </SettingRow>
+            </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Painel editoras */}
@@ -527,11 +523,11 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   )
 }
 
-function SettingRow({ label, children, last }: { label: string; children: React.ReactNode; last: boolean }) {
+function SettingRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding:'11px 16px', borderBottom: last ? 'none' : '1px solid rgba(0,0,0,0.12)' }}>
-      <div style={{ fontSize:'0.58rem', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:700, marginBottom:7, opacity:.55 }}>{label}</div>
-      <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>{children}</div>
+    <div style={{ padding:'14px 20px', borderBottom:'1px solid rgba(0,0,0,0.12)' }}>
+      <div style={{ fontSize:'0.58rem', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:700, marginBottom:8, opacity:.55 }}>{label}</div>
+      <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>{children}</div>
     </div>
   )
 }
