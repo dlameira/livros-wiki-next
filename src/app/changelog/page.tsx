@@ -5,6 +5,26 @@ import SiteHeader from '@/components/SiteHeader'
 
 const VERSIONS = [
   {
+    versao: '0.012',
+    data: '06 abr. 2026',
+    mudancas: [
+      { tipo: 'visual',   desc: 'Logo liki adicionado ao header e como favicon do site' },
+      { tipo: 'visual',   desc: 'Redesign editorial: header bold (Montserrat 700), linha divisória, filtros em uppercase com letter-spacing' },
+      { tipo: 'visual',   desc: 'Contador de livros como elemento tipográfico de destaque' },
+      { tipo: 'visual',   desc: 'Grid de capas mais denso' },
+      { tipo: 'tipografia', desc: 'Troca de fontes: Montserrat (interface) + Merriweather (títulos e sinopses)' },
+      { tipo: 'tipografia', desc: 'Accent color #fbf236 — amarelo vivo substituindo o cobre anterior' },
+      { tipo: 'tipografia', desc: 'Cor de texto de destaque adaptada por tema: amarelo no escuro, âmbar (#8a6f00) no claro' },
+      { tipo: 'busca',    desc: 'Busca PostgreSQL com unaccent + trigram: título, autor e editora num campo só' },
+      { tipo: 'busca',    desc: 'Busca accent-insensitive — "fosforo" encontra "Fósforo", "garcia" encontra "García"' },
+      { tipo: 'imagens',  desc: 'Proxy /api/cover/[isbn] com cache CDN de 30 dias — fim da lentidão nas capas' },
+      { tipo: 'filtros',  desc: '"tudo" renomeado para "catálogo"; seletor de datas visível só no modo catálogo' },
+      { tipo: 'filtros',  desc: 'Botão editoras: "selecionar" quando nenhuma selecionada, "adicionar" quando já há seleção' },
+      { tipo: 'catalogo', desc: 'Catálogo completo visível — removido filtro de editoras ativas (~206k livros)' },
+      { tipo: 'admin',    desc: 'livros.wiki/admin redireciona para o painel Directus' },
+    ],
+  },
+  {
     versao: '0.011',
     data: '04 abr. 2026',
     mudancas: [
@@ -31,21 +51,31 @@ const VERSIONS = [
 ]
 
 const TIPO_LABEL: Record<string, string> = {
-  stack:     'stack',
-  visual:    'visual',
-  modal:     'modal',
-  filtros:   'filtros',
-  editoras:  'editoras',
-  changelog: 'meta',
+  stack:      'stack',
+  visual:     'visual',
+  modal:      'modal',
+  filtros:    'filtros',
+  editoras:   'editoras',
+  changelog:  'meta',
+  tipografia: 'tipo',
+  busca:      'busca',
+  imagens:    'imagens',
+  catalogo:   'catálogo',
+  admin:      'admin',
 }
 
 const TIPO_COR: Record<string, string> = {
-  stack:     '#6b7cc4',
-  visual:    '#c9a84c',
-  modal:     '#72b48a',
-  filtros:   '#c47c6b',
-  editoras:  '#9b72c4',
-  changelog: '#72a4c4',
+  stack:      '#6b7cc4',
+  visual:     '#c9a84c',
+  modal:      '#72b48a',
+  filtros:    '#c47c6b',
+  editoras:   '#9b72c4',
+  changelog:  '#72a4c4',
+  tipografia: '#c47c9b',
+  busca:      '#7cb4a4',
+  imagens:    '#a4b47c',
+  catalogo:   '#b47c7c',
+  admin:      '#888',
 }
 
 export default function ChangelogPage() {
