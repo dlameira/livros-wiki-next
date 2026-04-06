@@ -271,7 +271,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     borderColor: preset === p ? 'var(--accent)' : 'var(--border)',
     background: preset === p ? 'var(--accent)' : 'transparent',
     color: preset === p ? '#0f0f0f' : 'var(--muted)',
-    fontWeight: preset === p ? 600 : 400,
+    fontWeight: preset === p ? 700 : 500,
   })
 
   return (
@@ -324,7 +324,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       {/* Autor */}
       <div style={{ padding: '8px 48px 0' }}>
         <input type="text" value={buscaInput} onChange={e => handleBuscaInput(e.target.value)} placeholder="buscar título, autor ou editora…"
-          style={{ background:'transparent', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', padding:'5px 13px', borderRadius:20, outline:'none', width:180 }} />
+          style={{ background:'transparent', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', fontWeight:500, padding:'5px 13px', borderRadius:20, outline:'none', width:180 }} />
       </div>
 
       {/* Status */}
