@@ -21,7 +21,6 @@ const VERSIONS = [
       { tipo: 'filtros',  desc: '"tudo" renomeado para "catálogo"; seletor de datas visível só no modo catálogo' },
       { tipo: 'filtros',  desc: 'Botão editoras: "selecionar" quando nenhuma selecionada, "adicionar" quando já há seleção' },
       { tipo: 'catalogo', desc: 'Catálogo completo visível — removido filtro de editoras ativas (~206k livros)' },
-      { tipo: 'admin',    desc: 'livros.wiki/admin redireciona para o painel Directus' },
     ],
   },
   {
