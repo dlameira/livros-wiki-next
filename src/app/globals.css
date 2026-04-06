@@ -6,7 +6,7 @@
   --border: #242424;
   --text: #e0d8ce;
   --muted: #666;
-  --accent: #c9a84c;
+  --accent: #fbf236;
 }
 
 html.light {
@@ -15,7 +15,7 @@ html.light {
   --border: #d8d3c8;
   --text: #24211c;
   --muted: #72777d;
-  --accent: #8a5c14;
+  --accent: #fbf236;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
