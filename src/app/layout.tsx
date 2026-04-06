@@ -4,6 +4,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'livros.wiki',
   description: 'livros sem algoritmos — catálogo editorial brasileiro',
+  icons: { icon: '/liki.png', apple: '/liki.png' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

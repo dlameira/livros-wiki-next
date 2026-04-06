@@ -21,7 +21,10 @@ export default function SiteHeader({ subtitle }: SiteHeaderProps) {
 
   return (
     <header style={{ padding: '32px 48px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-      <div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/liki.png" alt="liki" style={{ width: 40, height: 40, marginTop: 2, imageRendering: 'pixelated' }} />
+        <div>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'normal', letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 6 }}>
             livros<span style={{ color: 'var(--accent)' }}>.</span>wiki
@@ -36,6 +39,7 @@ export default function SiteHeader({ subtitle }: SiteHeaderProps) {
             <p style={{ fontSize: '0.68rem', color: 'var(--muted)', opacity: .4, marginTop: 3 }}>por daniel lameira + metabooks</p>
           </>
         )}
+        </div>
       </div>
       <button
         onClick={() => setTema(t => t === 'dark' ? 'light' : 'dark')}
