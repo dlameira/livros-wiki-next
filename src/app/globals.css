@@ -7,6 +7,7 @@
   --text: #e0d8ce;
   --muted: #666;
   --accent: #fbf236;
+  --accent-fg: #fbf236;   /* amarelo funciona como texto no dark */
 }
 
 html.light {
@@ -16,6 +17,7 @@ html.light {
   --text: #24211c;
   --muted: #72777d;
   --accent: #fbf236;
+  --accent-fg: #8a6f00;   /* âmbar escuro — legível no fundo claro */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

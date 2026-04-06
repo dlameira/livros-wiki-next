@@ -383,8 +383,8 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
                       <button key={s.nome_display} onClick={() => toggleEditora(s.nome_display)} style={{
                         display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:20, border:'1px solid', cursor:'pointer', fontSize:'0.75rem', fontFamily:'inherit',
                         borderColor: selectedEditoras.has(s.nome_display) ? 'var(--accent)' : 'var(--border)',
-                        color:       selectedEditoras.has(s.nome_display) ? 'var(--accent)' : 'var(--muted)',
-                        background:  selectedEditoras.has(s.nome_display) ? 'rgba(201,168,76,0.08)' : 'transparent',
+                        color:       selectedEditoras.has(s.nome_display) ? 'var(--accent-fg)' : 'var(--muted)',
+                        background:  selectedEditoras.has(s.nome_display) ? 'rgba(251,242,54,0.12)' : 'transparent',
                       }}>
                         {selectedEditoras.has(s.nome_display) && <span style={{ fontSize:'0.65rem' }}>✓</span>}
                         {s.nome_display}
@@ -402,8 +402,8 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
                       <button key={s.nome_display} onClick={() => toggleEditora(s.nome_display)} style={{
                         display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:20, border:'1px solid', cursor:'pointer', fontSize:'0.75rem', fontFamily:'inherit',
                         borderColor: selectedEditoras.has(s.nome_display) ? 'var(--accent)' : 'var(--border)',
-                        color:       selectedEditoras.has(s.nome_display) ? 'var(--accent)' : 'var(--muted)',
-                        background:  selectedEditoras.has(s.nome_display) ? 'rgba(201,168,76,0.08)' : 'transparent',
+                        color:       selectedEditoras.has(s.nome_display) ? 'var(--accent-fg)' : 'var(--muted)',
+                        background:  selectedEditoras.has(s.nome_display) ? 'rgba(251,242,54,0.12)' : 'transparent',
                       }}>
                         {selectedEditoras.has(s.nome_display) && <span style={{ fontSize:'0.65rem' }}>✓</span>}
                         {s.nome_display}
@@ -438,10 +438,10 @@ function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
           : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#333', fontSize:'2rem' }}>📖</div>
         }
       </div>
-      <div className="font-serif" style={{ fontSize:'0.82rem', lineHeight:1.35, color: hovered ? 'var(--accent)' : 'var(--text)', marginBottom:3, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', transition:'color 0.15s' }}>
+      <div style={{ fontSize:'0.82rem', lineHeight:1.35, color: hovered ? 'var(--accent-fg)' : 'var(--text)', marginBottom:3, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', transition:'color 0.15s' }}>
         {livro.titulo}
       </div>
-      <div style={{ fontSize:'0.73rem', color:'var(--muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+      <div className="font-serif" style={{ fontSize:'0.73rem', color:'var(--muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
         {livro.autor}
       </div>
     </div>
@@ -492,7 +492,7 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
           {livro.editora && (
             <div style={{ fontSize:'0.68rem', color:'var(--accent)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>{livro.editora}</div>
           )}
-          <h2 className="font-serif" style={{ fontSize:'1.35rem', fontWeight:'normal', lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>{livro.titulo}</h2>
+          <h2 style={{ fontSize:'1.35rem', fontWeight:600, lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>{livro.titulo}</h2>
           {livro.autor && <div className="font-serif" style={{ fontSize:'0.88rem', color:'var(--muted)', marginBottom:14 }}>{livro.autor}</div>}
           <div style={{ fontSize:'0.72rem', color:'var(--muted)', opacity:.7 }}>
             {dataFormatada || 'sem data cadastrada'}

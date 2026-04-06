@@ -32,11 +32,15 @@ export default function SiteHeader({ subtitle }: SiteHeaderProps) {
               </h1>
             </Link>
             {subtitle ?? (
-              <p style={{ fontSize: '0.72rem', color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                livros sem algoritmos &nbsp;·&nbsp;{' '}
-                <Link href="/changelog" style={{ color: 'var(--muted)', opacity: .5, textDecoration: 'none' }}>v 0.011</Link>
-                &nbsp;·&nbsp; <span style={{ opacity: .4 }}>por daniel lameira + metabooks</span>
-              </p>
+              <>
+                <p style={{ fontSize: '0.72rem', color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  livros sem algoritmos &nbsp;·&nbsp;{' '}
+                  <Link href="/changelog" style={{ color: 'var(--muted)', opacity: .5, textDecoration: 'none' }}>v 0.011</Link>
+                </p>
+                <p style={{ fontSize: '0.62rem', color: 'var(--muted)', opacity: .4, marginTop: 3, letterSpacing: '0.02em' }}>
+                  por daniel lameira + metabooks
+                </p>
+              </>
             )}
           </div>
         </div>
