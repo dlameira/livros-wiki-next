@@ -315,7 +315,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
           </span>
         ))}
         <button onClick={() => setEpOpen(true)} style={{ background:'transparent', border:'1px dashed var(--border)', color:'var(--muted)', fontSize:'0.75rem', fontFamily:'inherit', padding:'4px 12px', borderRadius:20, cursor:'pointer' }}>
-          + adicionar
+          {selectedEditoras.size > 0 ? '+ adicionar' : '+ selecionar'}
         </button>
       </div>
 
