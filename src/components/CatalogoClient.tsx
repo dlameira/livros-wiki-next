@@ -79,8 +79,8 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const [toMonth,   setToMonth]     = useState(new Date(initialTo).getMonth())
   const [toYear,    setToYear]      = useState(new Date(initialTo).getFullYear())
   const [selectedEditoras, setSelectedEditoras] = useState<Set<string>>(new Set())
-  const [autorInput, setAutorInput] = useState('')
-  const [autorBusca, setAutorBusca] = useState('')
+  const [buscaInput, setBuscaInput] = useState('')
+  const [buscaQuery, setBuscaQuery] = useState('')
 
   // ── Estado de dados ──────────────────────────────────────────────────────────
   const [livros,    setLivros]   = useState<Livro[]>(initialLivros)
@@ -100,8 +100,37 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const [epOpen,  setEpOpen]  = useState(false)
   const [epSearch, setEpSearch] = useState('')
 
-  // ── Fetch ────────────────────────────────────────────────────────────────────
-  async function fetchLivros(opts: { reset: boolean; currentPreset: Preset; currentFrom: Date | null; currentTo: Date | null; currentEditoras: Set<string>; currentAutor: string }) {
+  // ── Fetch via PostgreSQL (busca textual) ─────────────────────────────────────
+  async function fetchSearch(q: string, opts: { currentPreset: Preset; currentFrom: Date | null; currentTo: Date | null; currentEditoras: Set<string> }) {
+    const gen = ++fetchGenRef.current
+    fetchingRef.current = true
+    setLoading(true)
+    const editoras = opts.currentEditoras.size > 0 ? Array.from(opts.currentEditoras) : editorasAtivas
+    const params = new URLSearchParams({ q })
+    if (opts.currentPreset !== 'tudo') {
+      if (opts.currentFrom) params.set('from', toISO(opts.currentFrom))
+      if (opts.currentTo)   params.set('to',   toISO(opts.currentTo))
+    }
+    if (editoras.length) params.set('editoras', editoras.join(','))
+    try {
+      const res  = await fetch(`/api/search?${params}`)
+      const json = await res.json()
+      if (gen !== fetchGenRef.current) return
+      const data: Livro[] = json.data ?? []
+      setLivros(data)
+      setTotal(json.total ?? 0)
+      setHasMore(false)
+      seenIds.current = new Set(data.map(l => l.id))
+      pageRef.current = 1
+    } catch (e) {
+      if (gen === fetchGenRef.current) console.error(e)
+    } finally {
+      if (gen === fetchGenRef.current) { fetchingRef.current = false; setLoading(false) }
+    }
+  }
+
+  // ── Fetch via Directus (sem busca textual) ───────────────────────────────────
+  async function fetchLivros(opts: { reset: boolean; currentPreset: Preset; currentFrom: Date | null; currentTo: Date | null; currentEditoras: Set<string> }) {
     if (!opts.reset && fetchingRef.current) return
     const gen = opts.reset ? ++fetchGenRef.current : fetchGenRef.current
     fetchingRef.current = true
@@ -121,10 +150,6 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
     conditions.push({ editora: { _in: editoras } })
 
-    if (opts.currentAutor.trim()) {
-      opts.currentAutor.trim().split(/\s+/).filter(Boolean)
-        .forEach(w => conditions.push({ autor: { _icontains: w } }))
-    }
 
     const filter = conditions.length === 1 ? conditions[0] : { _and: conditions }
     const sort   = opts.currentPreset === 'prevenda' ? 'data_publicacao' : '-data_publicacao'
@@ -173,21 +198,26 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     seenIds.current = new Set()
     pageRef.current = 1
     setLivros([])
-    fetchLivros({ reset: true, currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras, currentAutor: autorBusca })
+    if (buscaQuery) {
+      fetchSearch(buscaQuery, { currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras })
+    } else {
+      fetchLivros({ reset: true, currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras })
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preset, dateFrom, dateTo, selectedEditoras, autorBusca])
+  }, [preset, dateFrom, dateTo, selectedEditoras, buscaQuery])
 
-  // ── Scroll infinito ──────────────────────────────────────────────────────────
+  // ── Scroll infinito (apenas sem busca textual) ───────────────────────────────
   useEffect(() => {
+    if (buscaQuery) return
     const obs = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore && !fetchingRef.current) {
-        fetchLivros({ reset: false, currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras, currentAutor: autorBusca })
+        fetchLivros({ reset: false, currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras })
       }
     }, { rootMargin: '500px' })
     if (sentinelRef.current) obs.observe(sentinelRef.current)
     return () => obs.disconnect()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, preset, dateFrom, dateTo, selectedEditoras, autorBusca])
+  }, [hasMore, preset, dateFrom, dateTo, selectedEditoras, buscaQuery])
 
   // ── Preset ────────────────────────────────────────────────────────────────────
   function handlePreset(p: Preset) {
@@ -204,12 +234,12 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     setDateTo(new Date(tY, tM, 1))
   }
 
-  // ── Autor debounce ────────────────────────────────────────────────────────────
-  const autorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  function handleAutorInput(val: string) {
-    setAutorInput(val)
-    if (autorTimerRef.current) clearTimeout(autorTimerRef.current)
-    autorTimerRef.current = setTimeout(() => setAutorBusca(val.trim()), 400)
+  // ── Busca debounce ────────────────────────────────────────────────────────────
+  const buscaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function handleBuscaInput(val: string) {
+    setBuscaInput(val)
+    if (buscaTimerRef.current) clearTimeout(buscaTimerRef.current)
+    buscaTimerRef.current = setTimeout(() => setBuscaQuery(val.trim()), 400)
   }
 
   function toggleEditora(nome: string) {
@@ -229,7 +259,8 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
   const anoAtual = hoje.getFullYear()
   const years = Array.from({ length: anoAtual + 3 - 1980 }, (_, i) => 1980 + i)
-  const selosFiltrados = epSearch.trim() ? selos.filter(s => s.nome_display?.toLowerCase().includes(epSearch.toLowerCase())) : selos
+  const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const selosFiltrados = epSearch.trim() ? selos.filter(s => normalize(s.nome_display ?? '').includes(normalize(epSearch))) : selos
   const selosPorGrupo  = grupos.map(g => ({ grupo: g, selos: selosFiltrados.filter(s => s.grupo?.nome === g.nome) })).filter(g => g.selos.length > 0)
   const selosSemGrupo  = selosFiltrados.filter(s => !s.grupo || s.grupo.nome === 'Independente')
   const selAdicionadas = selos.filter(s => selectedEditoras.has(s.nome_display))
@@ -290,7 +321,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
       {/* Autor */}
       <div style={{ padding: '8px 48px 0' }}>
-        <input type="text" value={autorInput} onChange={e => handleAutorInput(e.target.value)} placeholder="buscar autor…"
+        <input type="text" value={buscaInput} onChange={e => handleBuscaInput(e.target.value)} placeholder="buscar título, autor ou editora…"
           style={{ background:'transparent', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', padding:'5px 13px', borderRadius:20, outline:'none', width:180 }} />
       </div>
 
