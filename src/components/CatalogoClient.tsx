@@ -279,14 +279,14 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       <SiteHeader />
 
       {/* Preset */}
-      <div style={{ padding: '20px 48px 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ padding: '24px 48px 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button style={sel('prevenda')}    onClick={() => handlePreset('prevenda')}>pré-venda</button>
         <button style={sel('lancamentos')} onClick={() => handlePreset('lancamentos')}>lançamentos</button>
         <button style={sel('tudo')}        onClick={() => handlePreset('tudo')}>catálogo</button>
       </div>
 
       {/* Datas — só aparece no catálogo completo */}
-      {preset === 'tudo' && <div style={{ padding: '8px 48px 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', fontSize: '0.78rem', color: 'var(--muted)' }}>
+      {preset === 'tudo' && <div style={{ padding: '12px 48px 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', fontSize: '0.78rem', color: 'var(--muted)' }}>
         <span>de</span>
         <select value={fromMonth} onChange={e => { const v=Number(e.target.value); setFromMonth(v); onDateChange(v, fromYear, toMonth, toYear) }}
           style={{ background:'var(--surface)', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', padding:'4px 6px', borderRadius:6 }}>
@@ -308,7 +308,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       </div>}
 
       {/* Editoras selecionadas */}
-      <div style={{ padding: '8px 48px 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ padding: '12px 48px 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontSize:'0.78rem', color:'var(--muted)' }}>editoras</span>
         {selAdicionadas.map(s => (
           <span key={s.nome_display} style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px 4px 12px', borderRadius:20, border:'1px solid var(--border)', background:'var(--surface)', fontSize:'0.75rem', color:'var(--text)' }}>
@@ -322,13 +322,13 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       </div>
 
       {/* Autor */}
-      <div style={{ padding: '8px 48px 0' }}>
+      <div style={{ padding: '12px 48px 0' }}>
         <input type="text" value={buscaInput} onChange={e => handleBuscaInput(e.target.value)} placeholder="buscar título, autor ou editora…"
           style={{ background:'transparent', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', fontWeight:500, padding:'5px 13px', borderRadius:20, outline:'none', width:180 }} />
       </div>
 
       {/* Status */}
-      <div style={{ padding: '16px 48px 0', display: 'flex', alignItems: 'baseline', gap: 8, minHeight: 40 }}>
+      <div style={{ padding: '20px 48px 0', display: 'flex', alignItems: 'baseline', gap: 8, minHeight: 40 }}>
         {!loading && total > 0 && <>
           <span style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.03em', lineHeight: 1 }}>
             {total.toLocaleString('pt-BR')}
