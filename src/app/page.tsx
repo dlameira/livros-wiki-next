@@ -24,15 +24,17 @@ async function getInitialData() {
   const dataFrom = new Date(anoAtual, hoje.getMonth() - 6, 1).toISOString().split('T')[0]
   const dataTo   = new Date(anoAtual, hoje.getMonth() + 2, 1).toISOString().split('T')[0]
 
-  // Busca selos ativos com grupo aninhado
+  // Busca selos curados com grupo aninhado
+  // TODO: renomear campo 'ativo' → 'curada' no Directus e atualizar aqui
+  const CAMPO_CURADORIA = 'ativo'
   const selosRes = await fetch(
-    `${DIRECTUS_URL}/items/selos?fields=nome_display,grupo.nome,grupo.cor&limit=500&filter[ativo][_eq]=true`,
+    `${DIRECTUS_URL}/items/selos?fields=nome_display,grupo.nome,grupo.cor&limit=500&filter[${CAMPO_CURADORIA}][_eq]=true`,
     { cache: 'no-store' }
   )
   const selosJson = await selosRes.json()
   const selos: Selo[] = selosJson.data ?? []
 
-  // Nomes das editoras ativas para filtrar o catálogo
+  // Nomes das editoras curadas para o modo curadoria
   const editorasAtivas = selos.map(s => s.nome_display).filter(Boolean)
 
   // Busca livros — sem filtro de editora ativa, mostra todo o catálogo

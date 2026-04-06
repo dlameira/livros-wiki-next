@@ -102,9 +102,9 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
   // ── Configurações ─────────────────────────────────────────────────────────────
   const [tema,             setTema]             = useState<'dark'|'light'>('light')
-  const [curadoria,        setCuradoria]        = useState(false)
-  const [mostrarSemData,   setMostrarSemData]   = useState(true)
-  const [ocultarSemImagem, setOcultarSemImagem] = useState(false)
+  const [curadoria,        setCuradoria]        = useState(true)
+  const [mostrarSemData,   setMostrarSemData]   = useState(false)
+  const [ocultarSemImagem, setOcultarSemImagem] = useState(true)
   const [gridSize,         setGridSize]         = useState<'compacta'|'padrao'|'grande'>('padrao')
   const [settingsOpen,     setSettingsOpen]     = useState(false)
 
@@ -424,7 +424,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
                 ))}
               </SettingRow>
 
-              <SettingRow label="catálogo">
+              <SettingRow label="catálogo" hint={curadoria ? 'editoras selecionadas pelo livros.wiki — foco em literatura, quadrinhos e não-ficção de qualidade' : undefined}>
                 <SettingBtn active={!curadoria} onClick={() => setCuradoria(false)}>todas as editoras</SettingBtn>
                 <SettingBtn active={curadoria}  onClick={() => setCuradoria(true)}>curadoria</SettingBtn>
               </SettingRow>
@@ -523,11 +523,12 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   )
 }
 
-function SettingRow({ label, children }: { label: string; children: React.ReactNode }) {
+function SettingRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ padding:'16px 20px', borderBottom:'1px solid rgba(0,0,0,0.07)' }}>
       <div style={{ fontSize:'0.6rem', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:500, marginBottom:10, opacity:.4 }}>{label}</div>
       <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>{children}</div>
+      {hint && <div style={{ fontSize:'0.65rem', lineHeight:1.5, marginTop:8, opacity:.45 }}>{hint}</div>}
     </div>
   )
 }
