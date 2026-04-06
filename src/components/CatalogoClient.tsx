@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Livro, Selo } from '@/app/page'
 import SiteHeader from '@/components/SiteHeader'
@@ -100,12 +100,43 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const [epOpen,  setEpOpen]  = useState(false)
   const [epSearch, setEpSearch] = useState('')
 
+  // ── Configurações ─────────────────────────────────────────────────────────────
+  const [tema,             setTema]             = useState<'dark'|'light'>('light')
+  const [curadoria,        setCuradoria]        = useState(false)
+  const [mostrarSemData,   setMostrarSemData]   = useState(true)
+  const [ocultarSemImagem, setOcultarSemImagem] = useState(false)
+  const [gridSize,         setGridSize]         = useState<'compacta'|'padrao'|'grande'>('padrao')
+  const [settingsOpen,     setSettingsOpen]     = useState(false)
+
+  useEffect(() => {
+    const t = localStorage.getItem('livros-tema') as 'dark'|'light' | null
+    if (t) setTema(t)
+    if (localStorage.getItem('livros-curadoria') === 'true') setCuradoria(true)
+    if (localStorage.getItem('livros-sem-data') === 'false') setMostrarSemData(false)
+    if (localStorage.getItem('livros-sem-imagem') === 'true') setOcultarSemImagem(true)
+    const g = localStorage.getItem('livros-grid') as 'compacta'|'padrao'|'grande' | null
+    if (g) setGridSize(g)
+  }, [])
+
+  useEffect(() => { localStorage.setItem('livros-curadoria',    String(curadoria)) },        [curadoria])
+  useEffect(() => { localStorage.setItem('livros-sem-data',     String(mostrarSemData)) },   [mostrarSemData])
+  useEffect(() => { localStorage.setItem('livros-sem-imagem',   String(ocultarSemImagem)) }, [ocultarSemImagem])
+  useEffect(() => { localStorage.setItem('livros-grid',         gridSize) },                 [gridSize])
+
+  function applyTema(t: 'dark'|'light') {
+    setTema(t)
+    document.documentElement.classList.toggle('light', t === 'light')
+    localStorage.setItem('livros-tema', t)
+  }
+
   // ── Fetch via PostgreSQL (busca textual) ─────────────────────────────────────
-  async function fetchSearch(q: string, opts: { currentPreset: Preset; currentFrom: Date | null; currentTo: Date | null; currentEditoras: Set<string> }) {
+  async function fetchSearch(q: string, opts: { currentPreset: Preset; currentFrom: Date | null; currentTo: Date | null; currentEditoras: Set<string>; curadoria: boolean }) {
     const gen = ++fetchGenRef.current
     fetchingRef.current = true
     setLoading(true)
-    const editoras = opts.currentEditoras.size > 0 ? Array.from(opts.currentEditoras) : []
+    const editoras = opts.currentEditoras.size > 0
+      ? Array.from(opts.currentEditoras)
+      : (opts.curadoria ? editorasAtivas : [])
     const params = new URLSearchParams({ q })
     if (opts.currentPreset !== 'tudo') {
       if (opts.currentFrom) params.set('from', toISO(opts.currentFrom))
@@ -130,7 +161,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   }
 
   // ── Fetch via Directus (sem busca textual) ───────────────────────────────────
-  async function fetchLivros(opts: { reset: boolean; currentPreset: Preset; currentFrom: Date | null; currentTo: Date | null; currentEditoras: Set<string> }) {
+  async function fetchLivros(opts: { reset: boolean; currentPreset: Preset; currentFrom: Date | null; currentTo: Date | null; currentEditoras: Set<string>; curadoria: boolean; mostrarSemData: boolean }) {
     if (!opts.reset && fetchingRef.current) return
     const gen = opts.reset ? ++fetchGenRef.current : fetchGenRef.current
     fetchingRef.current = true
@@ -140,7 +171,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     const conditions: object[] = []
 
     if (opts.currentPreset === 'tudo') {
-      conditions.push({ data_publicacao: { _nnull: true } })
+      if (!opts.mostrarSemData) conditions.push({ data_publicacao: { _nnull: true } })
     } else if (opts.currentFrom || opts.currentTo) {
       const d: Record<string, string> = {}
       if (opts.currentFrom) d._gte = toISO(opts.currentFrom)
@@ -148,10 +179,13 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       conditions.push({ data_publicacao: d })
     }
 
-    if (editoras.length > 0) conditions.push({ editora: { _in: editoras } })
+    if (editoras.length > 0) {
+      conditions.push({ editora: { _in: editoras } })
+    } else if (opts.curadoria && editorasAtivas.length > 0) {
+      conditions.push({ editora: { _in: editorasAtivas } })
+    }
 
-
-    const filter = conditions.length === 1 ? conditions[0] : { _and: conditions }
+    const filter = conditions.length === 1 ? conditions[0] : conditions.length > 1 ? { _and: conditions } : {}
     const sort   = opts.currentPreset === 'prevenda' ? 'data_publicacao' : '-data_publicacao'
     const page   = opts.reset ? 1 : pageRef.current + 1
 
@@ -199,25 +233,25 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     pageRef.current = 1
     setLivros([])
     if (buscaQuery) {
-      fetchSearch(buscaQuery, { currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras })
+      fetchSearch(buscaQuery, { currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras, curadoria })
     } else {
-      fetchLivros({ reset: true, currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras })
+      fetchLivros({ reset: true, currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras, curadoria, mostrarSemData })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preset, dateFrom, dateTo, selectedEditoras, buscaQuery])
+  }, [preset, dateFrom, dateTo, selectedEditoras, buscaQuery, curadoria, mostrarSemData])
 
   // ── Scroll infinito (apenas sem busca textual) ───────────────────────────────
   useEffect(() => {
     if (buscaQuery) return
     const obs = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore && !fetchingRef.current) {
-        fetchLivros({ reset: false, currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras })
+        fetchLivros({ reset: false, currentPreset: preset, currentFrom: dateFrom, currentTo: dateTo, currentEditoras: selectedEditoras, curadoria, mostrarSemData })
       }
     }, { rootMargin: '500px' })
     if (sentinelRef.current) obs.observe(sentinelRef.current)
     return () => obs.disconnect()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, preset, dateFrom, dateTo, selectedEditoras, buscaQuery])
+  }, [hasMore, preset, dateFrom, dateTo, selectedEditoras, buscaQuery, curadoria, mostrarSemData])
 
   // ── Preset ────────────────────────────────────────────────────────────────────
   function handlePreset(p: Preset) {
@@ -265,6 +299,16 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const selosSemGrupo  = selosFiltrados.filter(s => !s.grupo || s.grupo.nome === 'Independente')
   const selAdicionadas = selos.filter(s => selectedEditoras.has(s.nome_display))
 
+  const gridMinMax     = gridSize === 'compacta' ? '90px' : gridSize === 'grande' ? '160px' : '120px'
+  const livrosVisiveis = ocultarSemImagem ? livros.filter(l => l.capa_url) : livros
+
+  const settingsBtn = (
+    <button onClick={() => setSettingsOpen(true)}
+      style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--muted)', fontSize: '0.72rem', fontFamily: 'inherit', padding: '5px 12px', borderRadius: 20, cursor: 'pointer', letterSpacing: '0.04em' }}>
+      ⚙ configurar
+    </button>
+  )
+
   const sel = (p: Preset) => ({
     padding: '5px 16px', borderRadius: 20, border: '1px solid', fontFamily: 'inherit',
     fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase' as const, cursor: 'pointer',
@@ -276,7 +320,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader action={settingsBtn} />
 
       {/* Preset */}
       <div style={{ padding: '24px 48px 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -339,11 +383,11 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       </div>
 
       {/* Grid */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(120px, 1fr))', gap:'20px 14px', padding:'16px 48px 40px', alignItems:'start' }}>
-        {livros.length === 0 && !loading && (
+      <div style={{ display:'grid', gridTemplateColumns:`repeat(auto-fill, minmax(${gridMinMax}, 1fr))`, gap:'20px 14px', padding:'16px 48px 40px', alignItems:'start' }}>
+        {livrosVisiveis.length === 0 && !loading && (
           <div style={{ gridColumn:'1/-1', textAlign:'center', color:'#333', padding:'80px 0', fontSize:'0.9rem' }}>nenhum livro encontrado</div>
         )}
-        {livros.map(livro => <BookCard key={livro.id} livro={livro} onClick={() => setDetalhe(livro)} />)}
+        {livrosVisiveis.map(livro => <BookCard key={livro.id} livro={livro} onClick={() => setDetalhe(livro)} />)}
       </div>
 
       {/* Sentinel */}
@@ -352,6 +396,64 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       </div>
 
       {detalhe && <DetalheModal livro={detalhe} onClose={() => setDetalhe(null)} />}
+
+      {/* Painel de configurações */}
+      {settingsOpen && (
+        <>
+          <div onClick={() => setSettingsOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 399 }} />
+          <div style={{
+            position: 'fixed', top: 130, right: 48, zIndex: 400,
+            background: '#fbf236', color: '#0f0f0f',
+            border: '2px solid #0f0f0f', borderRadius: 4,
+            width: 272, overflow: 'hidden',
+            boxShadow: '4px 4px 0 #0f0f0f',
+            fontFamily: 'var(--font-sans), sans-serif',
+          }}>
+            {/* Header do painel */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'11px 16px', borderBottom:'1px solid rgba(0,0,0,0.18)' }}>
+              <span style={{ fontSize:'0.6rem', textTransform:'uppercase', letterSpacing:'0.14em', fontWeight:700 }}>configurações</span>
+              <button onClick={() => setSettingsOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'#0f0f0f', fontSize:'1rem', lineHeight:1, padding:0 }}>✕</button>
+            </div>
+
+            {/* Tema */}
+            <SettingRow label="tema" last={false}>
+              {(['light','dark'] as const).map(t => (
+                <SettingBtn key={t} active={tema === t} onClick={() => applyTema(t)}>
+                  {t === 'light' ? 'claro' : 'escuro'}
+                </SettingBtn>
+              ))}
+            </SettingRow>
+
+            {/* Catálogo */}
+            <SettingRow label="catálogo" last={false}>
+              <SettingBtn active={!curadoria} onClick={() => setCuradoria(false)}>todas</SettingBtn>
+              <SettingBtn active={curadoria}  onClick={() => setCuradoria(true)}>curadoria</SettingBtn>
+            </SettingRow>
+
+            {/* Sem data */}
+            <SettingRow label="sem data de lançamento" last={false}>
+              <SettingBtn active={mostrarSemData}  onClick={() => setMostrarSemData(true)}>mostrar</SettingBtn>
+              <SettingBtn active={!mostrarSemData} onClick={() => setMostrarSemData(false)}>ocultar</SettingBtn>
+            </SettingRow>
+
+            {/* Sem capa */}
+            <SettingRow label="sem capa" last={false}>
+              <SettingBtn active={!ocultarSemImagem} onClick={() => setOcultarSemImagem(false)}>mostrar</SettingBtn>
+              <SettingBtn active={ocultarSemImagem}  onClick={() => setOcultarSemImagem(true)}>ocultar</SettingBtn>
+            </SettingRow>
+
+            {/* Grade */}
+            <SettingRow label="grade" last={true}>
+              {(['compacta','padrao','grande'] as const).map(g => (
+                <SettingBtn key={g} active={gridSize === g} onClick={() => setGridSize(g)}>
+                  {g === 'padrao' ? 'padrão' : g}
+                </SettingBtn>
+              ))}
+            </SettingRow>
+          </div>
+        </>
+      )}
 
       {/* Painel editoras */}
       {epOpen && (
@@ -422,6 +524,28 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
         </div>
       )}
     </>
+  )
+}
+
+function SettingRow({ label, children, last }: { label: string; children: React.ReactNode; last: boolean }) {
+  return (
+    <div style={{ padding:'11px 16px', borderBottom: last ? 'none' : '1px solid rgba(0,0,0,0.12)' }}>
+      <div style={{ fontSize:'0.58rem', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:700, marginBottom:7, opacity:.55 }}>{label}</div>
+      <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>{children}</div>
+    </div>
+  )
+}
+
+function SettingBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} style={{
+      padding:'3px 11px', borderRadius:20, border:'1px solid #0f0f0f', cursor:'pointer',
+      fontSize:'0.7rem', fontFamily:'inherit',
+      background: active ? '#0f0f0f' : 'transparent',
+      color:      active ? '#fbf236' : '#0f0f0f',
+      fontWeight: active ? 600 : 400,
+      letterSpacing: '0.02em',
+    }}>{children}</button>
   )
 }
 

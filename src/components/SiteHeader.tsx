@@ -4,9 +4,10 @@ import Link from 'next/link'
 
 interface SiteHeaderProps {
   subtitle?: React.ReactNode
+  action?: React.ReactNode
 }
 
-export default function SiteHeader({ subtitle }: SiteHeaderProps) {
+export default function SiteHeader({ subtitle, action }: SiteHeaderProps) {
   const [tema, setTema] = useState<'dark'|'light'>('light')
 
   useEffect(() => {
@@ -44,12 +45,14 @@ export default function SiteHeader({ subtitle }: SiteHeaderProps) {
             )}
           </div>
         </div>
-        <button
-          onClick={() => setTema(t => t === 'dark' ? 'light' : 'dark')}
-          style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--muted)', fontSize: '0.72rem', fontFamily: 'inherit', padding: '5px 12px', borderRadius: 20, cursor: 'pointer', letterSpacing: '0.04em' }}
-        >
-          {tema === 'dark' ? '☀ claro' : '☾ escuro'}
-        </button>
+        {action ?? (
+          <button
+            onClick={() => setTema(t => t === 'dark' ? 'light' : 'dark')}
+            style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--muted)', fontSize: '0.72rem', fontFamily: 'inherit', padding: '5px 12px', borderRadius: 20, cursor: 'pointer', letterSpacing: '0.04em' }}
+          >
+            {tema === 'dark' ? '☀ claro' : '☾ escuro'}
+          </button>
+        )}
       </header>
       {/* Linha divisória */}
       <div style={{ borderBottom: '1px solid var(--border)', margin: '0 48px' }} />
