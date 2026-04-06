@@ -3,6 +3,7 @@ import { SELO_INFO, HITS, SELO_LOGOS_FALLBACK, SELO_INSTAGRAM, GRUPO_DESCRICAO }
 import { notFound } from 'next/navigation'
 import SelosGrid, { type SeloEnriquecido, type Capa } from './SelosGrid'
 import MosaicoScroll from './MosaicoScroll'
+import SiteHeader from '@/components/SiteHeader'
 
 export const dynamic = 'force-dynamic'
 
@@ -147,6 +148,8 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Georgia, serif' }}>
+
+      <SiteHeader />
 
       {/* ── HERO ─────────────────────────────────────────── */}
       <div style={{

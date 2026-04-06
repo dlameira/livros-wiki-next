@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import SiteHeader from '@/components/SiteHeader'
 
 const VERSIONS = [
   {
@@ -49,34 +49,9 @@ const TIPO_COR: Record<string, string> = {
 }
 
 export default function ChangelogPage() {
-  const [tema, setTema] = useState<'dark'|'light'>('light')
-
-  useEffect(() => {
-    const saved = localStorage.getItem('livros-tema') as 'dark'|'light' | null
-    if (saved) setTema(saved)
-  }, [])
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('light', tema === 'light')
-    localStorage.setItem('livros-tema', tema)
-  }, [tema])
-
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)', color:'var(--text)', fontFamily:'Georgia, serif' }}>
-      <header style={{ padding:'32px 48px 0', display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
-        <div>
-          <Link href="/" style={{ textDecoration:'none' }}>
-            <h1 style={{ fontSize:'1.5rem', fontWeight:'normal', letterSpacing:'0.06em', color:'var(--text)', marginBottom:6 }}>
-              livros<span style={{ color:'var(--accent)' }}>.</span>wiki
-            </h1>
-          </Link>
-          <p style={{ fontSize:'0.82rem', color:'var(--muted)' }}>histórico de versões</p>
-        </div>
-        <button onClick={() => setTema(t => t === 'dark' ? 'light' : 'dark')}
-          style={{ background:'none', border:'1px solid var(--border)', color:'var(--muted)', fontSize:'0.78rem', fontFamily:'inherit', padding:'5px 12px', borderRadius:20, cursor:'pointer', marginTop:6 }}>
-          {tema === 'dark' ? '☀ claro' : '☾ escuro'}
-        </button>
-      </header>
+      <SiteHeader subtitle={<p style={{ fontSize:'0.82rem', color:'var(--muted)' }}>histórico de versões</p>} />
 
       <main style={{ maxWidth:720, margin:'48px auto', padding:'0 48px 80px' }}>
         <div style={{ display:'flex', alignItems:'baseline', gap:16, marginBottom:40, paddingBottom:20, borderBottom:'1px solid var(--border)' }}>

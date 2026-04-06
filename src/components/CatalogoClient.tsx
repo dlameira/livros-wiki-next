@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Livro, Selo } from '@/app/page'
+import SiteHeader from '@/components/SiteHeader'
 
 const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'https://directus-production-afdd.up.railway.app'
 const PAGE_LIMIT = 500
@@ -68,17 +69,6 @@ function buildGrupos(selos: Selo[]) {
 export default function CatalogoClient({ livros: initialLivros, totalCount: initialTotal, selos, editorasAtivas, dataFrom: initialFrom, dataTo: initialTo }: Props) {
   const grupos = buildGrupos(selos)
   const hoje = new Date()
-
-  // ── Tema ─────────────────────────────────────────────────────────────────────
-  const [tema, setTema] = useState<'dark'|'light'>('light')
-  useEffect(() => {
-    const saved = localStorage.getItem('livros-tema') as 'dark'|'light' | null
-    if (saved) setTema(saved)
-  }, [])
-  useEffect(() => {
-    document.documentElement.classList.toggle('light', tema === 'light')
-    localStorage.setItem('livros-tema', tema)
-  }, [tema])
 
   // ── Estado de filtros ────────────────────────────────────────────────────────
   const [preset, setPreset]         = useState<Preset>('lancamentos')
@@ -253,19 +243,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
 
   return (
     <>
-      <header style={{ padding: '32px 48px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'normal', letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 6 }}>
-            livros<span style={{ color: 'var(--accent)' }}>.</span>wiki
-          </h1>
-          <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>livros sem algoritmos &nbsp;·&nbsp; <Link href="/changelog" style={{ color: 'var(--muted)', opacity:.5, textDecoration:'none' }}>v 0.011</Link></p>
-          <p style={{ fontSize: '0.68rem', color: 'var(--muted)', opacity:.4, marginTop: 3 }}>por daniel lameira + metabooks</p>
-        </div>
-        <button onClick={() => setTema(t => t === 'dark' ? 'light' : 'dark')}
-          style={{ background:'none', border:'1px solid var(--border)', color:'var(--muted)', fontSize:'0.78rem', fontFamily:'inherit', padding:'5px 12px', borderRadius:20, cursor:'pointer', marginTop:6 }}>
-          {tema === 'dark' ? '☀ claro' : '☾ escuro'}
-        </button>
-      </header>
+      <SiteHeader />
 
       {/* Preset */}
       <div style={{ padding: '16px 48px 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -300,7 +278,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       <div style={{ padding: '8px 48px 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontSize:'0.78rem', color:'var(--muted)' }}>editoras</span>
         {selAdicionadas.map(s => (
-          <span key={s.nome_display} style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px 4px 12px', borderRadius:20, border:'1px solid #3a3a3a', background:'#1e1e1e', fontSize:'0.75rem', color:'var(--text)' }}>
+          <span key={s.nome_display} style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px 4px 12px', borderRadius:20, border:'1px solid var(--border)', background:'var(--surface)', fontSize:'0.75rem', color:'var(--text)' }}>
             {s.nome_display}
             <span onClick={() => toggleEditora(s.nome_display)} style={{ cursor:'pointer', color:'var(--muted)', fontSize:'1rem', lineHeight:1 }}>×</span>
           </span>
@@ -348,9 +326,9 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
               </div>
               <button onClick={() => setEpOpen(false)} style={{ background:'none', border:'none', color:'var(--muted)', fontSize:'1.1rem', cursor:'pointer' }}>✕</button>
             </div>
-            <div style={{ padding:'10px 16px', borderBottom:'1px solid #1a1a1a', flexShrink:0 }}>
+            <div style={{ padding:'10px 16px', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
               <input type="text" value={epSearch} onChange={e => setEpSearch(e.target.value)} placeholder="buscar editora ou grupo…"
-                style={{ width:'100%', background:'#111', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.82rem', fontFamily:'inherit', padding:'7px 12px', borderRadius:6, outline:'none' }} />
+                style={{ width:'100%', background:'var(--surface)', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.82rem', fontFamily:'inherit', padding:'7px 12px', borderRadius:6, outline:'none' }} />
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'12px 16px' }}>
               {selosPorGrupo.map(({ grupo, selos: sl }) => {
