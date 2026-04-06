@@ -68,7 +68,7 @@ export function DetalheModal({ target, onClose }: { target: ModalTarget; onClose
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const capaUrl  = data?.capa_url ?? (target.type === 'id' ? target.capa_url : null)
+  const capaUrl  = data?.isbn ? `/api/cover/${data.isbn}?size=m` : (target.type === 'id' ? target.capa_url : null)
   const titulo   = data?.titulo ?? target.titulo
   const contribs = data?.contributors ? formatContributors(data.contributors) : ''
 

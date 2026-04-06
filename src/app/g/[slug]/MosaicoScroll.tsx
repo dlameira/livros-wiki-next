@@ -118,7 +118,7 @@ export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
                   {livro.capa_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={livro.capa_url}
+                      src={`/api/cover/${livro.isbn}?size=s`}
                       alt={livro.titulo}
                       style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }}
                       loading="lazy"

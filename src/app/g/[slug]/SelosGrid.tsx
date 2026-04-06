@@ -57,7 +57,7 @@ function BookCard({ capa, onClick }: { capa: Capa; onClick: () => void }) {
         {capa.capa_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={capa.capa_url}
+            src={`/api/cover/${capa.isbn}?size=s`}
             alt={capa.titulo}
             style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: 'auto', display: 'block' }}
             loading="lazy"
