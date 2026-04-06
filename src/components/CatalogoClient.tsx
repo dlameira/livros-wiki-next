@@ -280,11 +280,11 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       <div style={{ padding: '16px 48px 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button style={sel('prevenda')}    onClick={() => handlePreset('prevenda')}>pré-venda</button>
         <button style={sel('lancamentos')} onClick={() => handlePreset('lancamentos')}>lançamentos</button>
-        <button style={sel('tudo')}        onClick={() => handlePreset('tudo')}>tudo</button>
+        <button style={sel('tudo')}        onClick={() => handlePreset('tudo')}>catálogo</button>
       </div>
 
-      {/* Datas */}
-      <div style={{ padding: '8px 48px 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', fontSize: '0.78rem', color: 'var(--muted)' }}>
+      {/* Datas — só aparece no catálogo completo */}
+      {preset === 'tudo' && <div style={{ padding: '8px 48px 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', fontSize: '0.78rem', color: 'var(--muted)' }}>
         <span>de</span>
         <select value={fromMonth} onChange={e => { const v=Number(e.target.value); setFromMonth(v); onDateChange(v, fromYear, toMonth, toYear) }}
           style={{ background:'var(--surface)', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', padding:'4px 6px', borderRadius:6 }}>
@@ -303,7 +303,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
           style={{ background:'var(--surface)', border:'1px solid var(--border)', color:'var(--text)', fontSize:'0.78rem', fontFamily:'inherit', padding:'4px 6px', borderRadius:6 }}>
           {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-      </div>
+      </div>}
 
       {/* Editoras selecionadas */}
       <div style={{ padding: '8px 48px 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
