@@ -91,7 +91,7 @@ export default function ChangelogPage() {
         {VERSIONS.map((v, vi) => (
           <section key={v.versao} style={{ marginBottom: vi < VERSIONS.length - 1 ? 56 : 0 }}>
             <div style={{ display:'flex', alignItems:'baseline', gap:16, marginBottom:20 }}>
-              <span style={{ fontSize:'1rem', fontWeight:'normal', color:'var(--accent)', letterSpacing:'0.04em' }}>v {v.versao}</span>
+              <span style={{ fontSize:'1rem', fontWeight:'normal', color:'var(--accent-fg)', letterSpacing:'0.04em' }}>v {v.versao}</span>
               <span style={{ fontSize:'0.8rem', color:'var(--muted)' }}>{v.data}</span>
             </div>
             <div style={{ borderLeft:'2px solid var(--border)', paddingLeft:20, display:'flex', flexDirection:'column', gap:12 }}>

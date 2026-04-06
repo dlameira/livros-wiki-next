@@ -490,7 +490,7 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
         {/* Info */}
         <div style={{ padding: livro.capa_url ? '0 40px 24px' : '48px 40px 24px', textAlign:'center' }}>
           {livro.editora && (
-            <div style={{ fontSize:'0.68rem', color:'var(--accent)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>{livro.editora}</div>
+            <div style={{ fontSize:'0.68rem', color:'var(--accent-fg)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>{livro.editora}</div>
           )}
           <h2 className="font-serif" style={{ fontSize:'1.35rem', fontWeight:400, lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>{livro.titulo}</h2>
           {livro.autor && <div style={{ fontSize:'0.88rem', color:'var(--muted)', marginBottom:14 }}>{livro.autor}</div>}

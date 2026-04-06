@@ -86,7 +86,7 @@ export function DetalheModal({ target, onClose }: { target: ModalTarget; onClose
         )}
 
         <div style={{ padding: capaUrl ? '0 40px 24px' : '48px 40px 24px', textAlign: 'center' }}>
-          {data?.editora && <div style={{ fontSize: '0.68rem', color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>{data.editora}</div>}
+          {data?.editora && <div style={{ fontSize: '0.68rem', color: 'var(--accent-fg)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>{data.editora}</div>}
           <h2 style={{ fontSize: '1.35rem', fontWeight: 'normal', lineHeight: 1.35, color: 'var(--text)', marginBottom: 8 }}>{titulo}</h2>
           {data?.autor && <div style={{ fontSize: '0.88rem', color: 'var(--muted)', marginBottom: 14 }}>{data.autor}</div>}
           {(data?.data_publicacao || data?.isbn) && (

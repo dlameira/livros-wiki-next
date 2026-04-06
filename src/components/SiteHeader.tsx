@@ -28,7 +28,7 @@ export default function SiteHeader({ subtitle }: SiteHeaderProps) {
           <div>
             <Link href="/" style={{ textDecoration: 'none' }}>
               <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)', marginBottom: 4, lineHeight: 1 }}>
-                livros<span style={{ color: 'var(--accent)' }}>.</span>wiki
+                livros<span style={{ color: 'var(--accent-fg)' }}>.</span>wiki
               </h1>
             </Link>
             {subtitle ?? (
