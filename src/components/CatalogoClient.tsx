@@ -374,7 +374,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       {/* Status */}
       <div style={{ padding: '20px 48px 0', display: 'flex', alignItems: 'baseline', gap: 6, minHeight: 28 }}>
         {!loading && total > 0 && <>
-          <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+          <span style={{ fontSize: '0.88rem', fontWeight: 400, color: 'var(--text)' }}>
             {total.toLocaleString('pt-BR')}
           </span>
           <span style={{ fontSize: '0.68rem', color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>livros</span>
