@@ -25,7 +25,7 @@ async function getInitialData() {
   const dataTo   = new Date(anoAtual, hoje.getMonth() + 2, 1).toISOString().split('T')[0]
 
   // Busca selos curados com grupo aninhado
-  const CAMPO_CURADORIA = 'ativo' // TODO: renomear coluna no Railway: ALTER TABLE selos RENAME COLUMN ativo TO curada
+  const CAMPO_CURADORIA = 'curada'
   const selosRes = await fetch(
     `${DIRECTUS_URL}/items/selos?fields=nome_display,grupo.nome,grupo.cor&limit=500&filter[${CAMPO_CURADORIA}][_eq]=true`,
     { cache: 'no-store' }
