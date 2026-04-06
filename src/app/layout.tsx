@@ -1,17 +1,17 @@
 import type { Metadata } from 'next'
-import { IBM_Plex_Sans, Lora } from 'next/font/google'
+import { Montserrat, Merriweather } from 'next/font/google'
 import './globals.css'
 
-const ibmPlexSans = IBM_Plex_Sans({
+const montserrat = Montserrat({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
+  weight: ['300', '400', '500', '600', '700'],
   variable: '--font-sans',
   display: 'swap',
 })
 
-const lora = Lora({
+const merriweather = Merriweather({
   subsets: ['latin'],
-  weight: ['400', '500'],
+  weight: ['300', '400', '700'],
   variable: '--font-serif',
   display: 'swap',
 })
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`light ${ibmPlexSans.variable} ${lora.variable}`}>
+    <html lang="pt-BR" className={`light ${montserrat.variable} ${merriweather.variable}`}>
       <body>{children}</body>
     </html>
   )
