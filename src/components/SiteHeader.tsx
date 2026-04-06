@@ -23,7 +23,7 @@ export default function SiteHeader({ subtitle }: SiteHeaderProps) {
     <header style={{ padding: '32px 48px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'stretch', gap: 14 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/liki.png" alt="liki" style={{ width: 'auto', height: '81px', objectFit: 'contain', imageRendering: 'pixelated' }} />
+        <img src="/liki.png" alt="liki" style={{ width: 'auto', height: '81px', imageRendering: 'pixelated', flexShrink: 0 }} />
         <div>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'normal', letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 6 }}>
