@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'https://directus-production-afdd.up.railway.app'
 
@@ -80,8 +81,8 @@ export function DetalheModal({ target, onClose }: { target: ModalTarget; onClose
 
         {capaUrl && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 40px 20px' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={capaUrl} alt={titulo} style={{ maxWidth: 140, height: 'auto', display: 'block', borderRadius: 3, boxShadow: '0 6px 24px rgba(0,0,0,0.35)' }} />
+            <Image src={capaUrl} alt={titulo} width={140} height={210}
+              style={{ height: 'auto', display: 'block', borderRadius: 3, boxShadow: '0 6px 24px rgba(0,0,0,0.35)' }} />
           </div>
         )}
 
