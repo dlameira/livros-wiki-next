@@ -266,10 +266,12 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const selAdicionadas = selos.filter(s => selectedEditoras.has(s.nome_display))
 
   const sel = (p: Preset) => ({
-    padding: '5px 13px', borderRadius: 20, border: '1px solid', fontFamily: 'inherit', fontSize: '0.78rem', cursor: 'pointer',
+    padding: '5px 16px', borderRadius: 20, border: '1px solid', fontFamily: 'inherit',
+    fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase' as const, cursor: 'pointer',
     borderColor: preset === p ? 'var(--accent)' : 'var(--border)',
     background: preset === p ? 'var(--accent)' : 'transparent',
     color: preset === p ? '#0f0f0f' : 'var(--muted)',
+    fontWeight: preset === p ? 600 : 400,
   })
 
   return (
@@ -277,7 +279,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       <SiteHeader />
 
       {/* Preset */}
-      <div style={{ padding: '16px 48px 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ padding: '20px 48px 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button style={sel('prevenda')}    onClick={() => handlePreset('prevenda')}>pré-venda</button>
         <button style={sel('lancamentos')} onClick={() => handlePreset('lancamentos')}>lançamentos</button>
         <button style={sel('tudo')}        onClick={() => handlePreset('tudo')}>catálogo</button>
@@ -326,12 +328,18 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       </div>
 
       {/* Status */}
-      <div style={{ padding: '12px 48px 0', fontSize: '0.8rem', color: 'var(--muted)', minHeight: 32 }}>
-        {loading ? 'carregando…' : total > 0 ? `${total.toLocaleString('pt-BR')} livros` : ''}
+      <div style={{ padding: '16px 48px 0', display: 'flex', alignItems: 'baseline', gap: 8, minHeight: 40 }}>
+        {!loading && total > 0 && <>
+          <span style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+            {total.toLocaleString('pt-BR')}
+          </span>
+          <span style={{ fontSize: '0.68rem', color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>livros</span>
+        </>}
+        {loading && <span style={{ fontSize: '0.72rem', color: 'var(--muted)', letterSpacing: '0.08em' }}>carregando…</span>}
       </div>
 
       {/* Grid */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px, 1fr))', gap:'28px 20px', padding:'24px 48px 40px', alignItems:'start' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(120px, 1fr))', gap:'20px 14px', padding:'16px 48px 40px', alignItems:'start' }}>
         {livros.length === 0 && !loading && (
           <div style={{ gridColumn:'1/-1', textAlign:'center', color:'#333', padding:'80px 0', fontSize:'0.9rem' }}>nenhum livro encontrado</div>
         )}
