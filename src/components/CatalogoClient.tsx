@@ -430,7 +430,7 @@ function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
           : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#333', fontSize:'2rem' }}>📖</div>
         }
       </div>
-      <div style={{ fontSize:'0.82rem', lineHeight:1.35, color: hovered ? 'var(--accent)' : 'var(--text)', marginBottom:3, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', transition:'color 0.15s' }}>
+      <div className="font-serif" style={{ fontSize:'0.82rem', lineHeight:1.35, color: hovered ? 'var(--accent)' : 'var(--text)', marginBottom:3, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', transition:'color 0.15s' }}>
         {livro.titulo}
       </div>
       <div style={{ fontSize:'0.73rem', color:'var(--muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
@@ -484,8 +484,8 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
           {livro.editora && (
             <div style={{ fontSize:'0.68rem', color:'var(--accent)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>{livro.editora}</div>
           )}
-          <h2 style={{ fontSize:'1.35rem', fontWeight:'normal', lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>{livro.titulo}</h2>
-          {livro.autor && <div style={{ fontSize:'0.88rem', color:'var(--muted)', marginBottom:14 }}>{livro.autor}</div>}
+          <h2 className="font-serif" style={{ fontSize:'1.35rem', fontWeight:'normal', lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>{livro.titulo}</h2>
+          {livro.autor && <div className="font-serif" style={{ fontSize:'0.88rem', color:'var(--muted)', marginBottom:14 }}>{livro.autor}</div>}
           <div style={{ fontSize:'0.72rem', color:'var(--muted)', opacity:.7 }}>
             {dataFormatada || 'sem data cadastrada'}
             {livro.isbn && <span style={{ marginLeft:10, paddingLeft:10, borderLeft:'1px solid var(--border)' }}>ISBN {livro.isbn}</span>}
@@ -501,7 +501,7 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
                 <div style={{ fontSize:'0.78rem', color:'var(--muted)', marginBottom:20, lineHeight:1.7, textAlign:'center', opacity:.8 }}>{contribs}</div>
               )}
               {extra.sinopse
-                ? <div style={{ fontSize:'0.88rem', lineHeight:1.8, color:'var(--text)', opacity:.85 }}>
+                ? <div className="font-serif" style={{ fontSize:'0.88rem', lineHeight:1.8, color:'var(--text)', opacity:.85 }}>
                     {extra.sinopse.split('\n').filter(Boolean).map((p, i) => <p key={i} style={{ marginBottom:14 }}>{p}</p>)}
                   </div>
                 : <div style={{ color:'var(--muted)', fontSize:'0.82rem', opacity:.5, textAlign:'center', padding:'8px 0' }}>sinopse não disponível</div>
@@ -509,7 +509,7 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
               {extra.biografia_autor && (
                 <div style={{ marginTop:28, paddingTop:24, borderTop:'1px solid var(--border)' }}>
                   <div style={{ fontSize:'0.68rem', textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--muted)', opacity:.6, marginBottom:12, textAlign:'center' }}>sobre o autor</div>
-                  <div style={{ fontSize:'0.85rem', lineHeight:1.75, color:'var(--text)', opacity:.7 }}>{extra.biografia_autor}</div>
+                  <div className="font-serif" style={{ fontSize:'0.85rem', lineHeight:1.75, color:'var(--text)', opacity:.7 }}>{extra.biografia_autor}</div>
                 </div>
               )}
             </>
