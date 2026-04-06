@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import type { Livro, Selo } from '@/app/page'
 import SiteHeader from '@/components/SiteHeader'
 
@@ -395,9 +394,8 @@ function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
       style={{ cursor:'pointer', transform: hovered ? 'translateY(-4px)' : 'none', transition:'transform 0.15s' }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'2/3', background:'var(--bg)', borderRadius:4, overflow:'hidden', marginBottom:9 }}>
         {livro.capa_url
-          ? <Image src={livro.capa_url} alt={livro.titulo} fill sizes="150px"
-              onLoad={() => setImgLoaded(true)}
-              style={{ objectFit:'contain', objectPosition:'bottom', opacity: imgLoaded ? 1 : 0, transition:'opacity 0.35s' }} />
+          ? <img src={livro.capa_url} alt={livro.titulo} loading="lazy" onLoad={() => setImgLoaded(true)}
+              style={{ position:'absolute', bottom:0, left:0, width:'100%', height:'auto', display:'block', opacity: imgLoaded ? 1 : 0, transition:'opacity 0.35s' }} />
           : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#333', fontSize:'2rem' }}>📖</div>
         }
       </div>
@@ -444,8 +442,9 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
         {/* Capa centralizada */}
         {livro.capa_url && (
           <div style={{ display:'flex', justifyContent:'center', padding:'40px 40px 20px' }}>
-            <Image src={livro.capa_url} alt={livro.titulo} width={140} height={210}
-              style={{ borderRadius:3, boxShadow:'0 6px 24px rgba(0,0,0,0.35)', height:'auto' }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={livro.capa_url} alt={livro.titulo}
+              style={{ maxWidth:140, height:'auto', display:'block', borderRadius:3, boxShadow:'0 6px 24px rgba(0,0,0,0.35)' }} />
           </div>
         )}
 

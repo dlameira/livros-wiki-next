@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import Image from 'next/image'
 import { DetalheModal, type ModalTarget } from './DetalheModal'
 
 type LivroMosaico = {
@@ -117,12 +116,12 @@ export default function MosaicoScroll({ livros }: { livros: LivroMosaico[] }) {
                   }}
                 >
                   {livro.capa_url && (
-                    <Image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={livro.capa_url}
                       alt={livro.titulo}
-                      fill
-                      sizes="133px"
-                      style={{ objectFit: 'cover' }}
+                      style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }}
+                      loading="lazy"
                     />
                   )}
                 </div>

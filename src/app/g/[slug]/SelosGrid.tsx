@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Image from 'next/image'
 import { SELO_IG_STATS } from '@/lib/selos-data'
 import { DetalheModal, type ModalTarget } from './DetalheModal'
 
@@ -56,12 +55,12 @@ function BookCard({ capa, onClick }: { capa: Capa; onClick: () => void }) {
     >
       <div style={{ position: 'relative', width: '100%', aspectRatio: '2/3', background: 'var(--bg)', borderRadius: 3, overflow: 'hidden' }}>
         {capa.capa_url ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={capa.capa_url}
             alt={capa.titulo}
-            fill
-            sizes="120px"
-            style={{ objectFit: 'contain', objectPosition: 'bottom' }}
+            style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: 'auto', display: 'block' }}
+            loading="lazy"
           />
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: '1.2rem' }}>◻</div>
