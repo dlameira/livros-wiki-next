@@ -23,16 +23,16 @@ const fSpectral     = Spectral({ subsets: ['latin'], weight: ['400','500'], vari
 const fPtSerif      = PT_Serif({ subsets: ['latin'], weight: ['400'], variable: '--f-ptserif', display: 'swap' })
 
 const FONTES = [
-  { nome: 'Lora',               variavel: '--f-lora',         font: fLora },
-  { nome: 'Playfair Display',   variavel: '--f-playfair',     font: fPlayfair },
-  { nome: 'EB Garamond',        variavel: '--f-garamond',     font: fGaramond },
-  { nome: 'Merriweather',       variavel: '--f-merriweather', font: fMerriweather },
-  { nome: 'Source Serif 4',     variavel: '--f-source',       font: fSource },
-  { nome: 'Libre Baskerville',  variavel: '--f-baskerville',  font: fBaskerville },
-  { nome: 'Crimson Text',       variavel: '--f-crimson',      font: fCrimson },
-  { nome: 'Cormorant Garamond', variavel: '--f-cormorant',    font: fCormorant },
-  { nome: 'Spectral',           variavel: '--f-spectral',     font: fSpectral },
-  { nome: 'PT Serif',           variavel: '--f-ptserif',      font: fPtSerif },
+  { nome: 'Lora',               variavel: '--f-lora',         font: fLora,         scale: 1.00 },
+  { nome: 'Playfair Display',   variavel: '--f-playfair',     font: fPlayfair,     scale: 0.97 },
+  { nome: 'EB Garamond',        variavel: '--f-garamond',     font: fGaramond,     scale: 1.13 },
+  { nome: 'Merriweather',       variavel: '--f-merriweather', font: fMerriweather, scale: 0.92 },
+  { nome: 'Source Serif 4',     variavel: '--f-source',       font: fSource,       scale: 1.00 },
+  { nome: 'Libre Baskerville',  variavel: '--f-baskerville',  font: fBaskerville,  scale: 0.93 },
+  { nome: 'Crimson Text',       variavel: '--f-crimson',      font: fCrimson,      scale: 1.10 },
+  { nome: 'Cormorant Garamond', variavel: '--f-cormorant',    font: fCormorant,    scale: 1.18 },
+  { nome: 'Spectral',           variavel: '--f-spectral',     font: fSpectral,     scale: 1.00 },
+  { nome: 'PT Serif',           variavel: '--f-ptserif',      font: fPtSerif,      scale: 0.95 },
 ]
 
 const LIVRO = {
@@ -60,7 +60,7 @@ export default function FontesPage() {
       </div>
 
       <div style={{ display: 'flex', gap: 24, overflowX: 'auto', paddingBottom: 32, alignItems: 'flex-start' }}>
-        {FONTES.map(({ nome, variavel }) => (
+        {FONTES.map(({ nome, variavel, scale }) => (
           <div key={nome} style={{
             minWidth: 260,
             maxWidth: 260,
@@ -103,8 +103,8 @@ export default function FontesPage() {
                   {LIVRO.titulo}
                 </div>
                 <div style={{
-                  fontFamily: 'var(--font-sans), sans-serif',
-                  fontSize: '0.78rem',
+                  fontFamily: `var(${variavel}), Georgia, serif`,
+                  fontSize: `${0.78 * scale}rem`,
                   color: '#888',
                 }}>
                   {LIVRO.autor}
@@ -135,7 +135,7 @@ export default function FontesPage() {
               {LIVRO.sinopse.split('\n').filter(Boolean).map((p, i) => (
                 <p key={i} style={{
                   fontFamily: `var(${variavel}), Georgia, serif`,
-                  fontSize: '0.82rem',
+                  fontSize: `${0.82 * scale}rem`,
                   lineHeight: 1.75,
                   color: '#444',
                   marginBottom: 10,
