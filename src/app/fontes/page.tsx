@@ -94,7 +94,7 @@ export default function FontesPage() {
               />
               <div>
                 <div style={{
-                  fontFamily: `var(${variavel}), Georgia, serif`,
+                  fontFamily: 'var(--font-sans), sans-serif',
                   fontSize: '1rem',
                   lineHeight: 1.35,
                   color: '#24211c',
@@ -103,7 +103,7 @@ export default function FontesPage() {
                   {LIVRO.titulo}
                 </div>
                 <div style={{
-                  fontFamily: `var(${variavel}), Georgia, serif`,
+                  fontFamily: 'var(--font-sans), sans-serif',
                   fontSize: '0.78rem',
                   color: '#888',
                 }}>
