@@ -105,7 +105,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     const gen = ++fetchGenRef.current
     fetchingRef.current = true
     setLoading(true)
-    const editoras = opts.currentEditoras.size > 0 ? Array.from(opts.currentEditoras) : editorasAtivas
+    const editoras = opts.currentEditoras.size > 0 ? Array.from(opts.currentEditoras) : []
     const params = new URLSearchParams({ q })
     if (opts.currentPreset !== 'tudo') {
       if (opts.currentFrom) params.set('from', toISO(opts.currentFrom))
@@ -136,7 +136,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     fetchingRef.current = true
     if (opts.reset) setLoading(true)
 
-    const editoras = opts.currentEditoras.size > 0 ? Array.from(opts.currentEditoras) : editorasAtivas
+    const editoras = opts.currentEditoras.size > 0 ? Array.from(opts.currentEditoras) : []
     const conditions: object[] = []
 
     if (opts.currentPreset === 'tudo') {
@@ -148,7 +148,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
       conditions.push({ data_publicacao: d })
     }
 
-    conditions.push({ editora: { _in: editoras } })
+    if (editoras.length > 0) conditions.push({ editora: { _in: editoras } })
 
 
     const filter = conditions.length === 1 ? conditions[0] : { _and: conditions }
@@ -438,10 +438,10 @@ function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
           : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#333', fontSize:'2rem' }}>📖</div>
         }
       </div>
-      <div style={{ fontSize:'0.82rem', lineHeight:1.35, color: hovered ? 'var(--accent-fg)' : 'var(--text)', marginBottom:3, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', transition:'color 0.15s' }}>
+      <div className="font-serif" style={{ fontSize:'0.82rem', lineHeight:1.35, color: hovered ? 'var(--accent-fg)' : 'var(--text)', marginBottom:3, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', transition:'color 0.15s' }}>
         {livro.titulo}
       </div>
-      <div className="font-serif" style={{ fontSize:'0.73rem', color:'var(--muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+      <div style={{ fontSize:'0.73rem', color:'var(--muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
         {livro.autor}
       </div>
     </div>
@@ -492,8 +492,8 @@ function DetalheModal({ livro, onClose }: { livro: Livro; onClose: () => void })
           {livro.editora && (
             <div style={{ fontSize:'0.68rem', color:'var(--accent)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>{livro.editora}</div>
           )}
-          <h2 style={{ fontSize:'1.35rem', fontWeight:600, lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>{livro.titulo}</h2>
-          {livro.autor && <div className="font-serif" style={{ fontSize:'0.88rem', color:'var(--muted)', marginBottom:14 }}>{livro.autor}</div>}
+          <h2 className="font-serif" style={{ fontSize:'1.35rem', fontWeight:400, lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>{livro.titulo}</h2>
+          {livro.autor && <div style={{ fontSize:'0.88rem', color:'var(--muted)', marginBottom:14 }}>{livro.autor}</div>}
           <div style={{ fontSize:'0.72rem', color:'var(--muted)', opacity:.7 }}>
             {dataFormatada || 'sem data cadastrada'}
             {livro.isbn && <span style={{ marginLeft:10, paddingLeft:10, borderLeft:'1px solid var(--border)' }}>ISBN {livro.isbn}</span>}

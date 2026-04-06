@@ -35,12 +35,9 @@ async function getInitialData() {
   // Nomes das editoras ativas para filtrar o catálogo
   const editorasAtivas = selos.map(s => s.nome_display).filter(Boolean)
 
-  // Busca livros com filtro JSON
+  // Busca livros — sem filtro de editora ativa, mostra todo o catálogo
   const filtroInicial = {
-    _and: [
-      { data_publicacao: { _gte: dataFrom, _lte: dataTo } },
-      { editora: { _in: editorasAtivas } },
-    ]
+    data_publicacao: { _gte: dataFrom, _lte: dataTo }
   }
 
   const livrosUrl = `${DIRECTUS_URL}/items/biblioteca`
