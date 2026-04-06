@@ -424,7 +424,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
                 ))}
               </SettingRow>
 
-              <SettingRow label="catálogo" hint={curadoria ? 'editoras selecionadas pelo livros.wiki — foco em literatura, quadrinhos e não-ficção de qualidade' : undefined}>
+              <SettingRow label="catálogo" hint={curadoria ? 'editoras selecionadas pelo livros.wiki' : undefined}>
                 <SettingBtn active={!curadoria} onClick={() => setCuradoria(false)}>todas as editoras</SettingBtn>
                 <SettingBtn active={curadoria}  onClick={() => setCuradoria(true)}>curadoria</SettingBtn>
               </SettingRow>
