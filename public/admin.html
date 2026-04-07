@@ -358,7 +358,10 @@ btn, .btn {
   <main>
     <!-- TAB: EDITORAS -->
     <div id="tab-selos" class="tab-panel active">
-      <h2>Editoras</h2>
+      <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:6px">
+        <h2>Editoras</h2>
+        <span id="curadas-count" style="font-size:.83rem;color:var(--muted)"></span>
+      </div>
       <p style="color:var(--muted);font-size:.83rem;margin-bottom:20px">
         <span class="badge badge-green">curadas</span> entram no sync. &nbsp;
         <span class="badge badge-gray">não curadas</span> não sincronizam. &nbsp;
@@ -721,6 +724,14 @@ function renderWorld() {
   const standalone = _selos.filter(s => isIndependent(s) && s.curada).map(s => seloTagHtml(s, true)).join('');
 
   world.innerHTML = chips + standalone;
+
+  // Contagem: cada grupo conta como 1, cada editora independente curada conta como 1
+  const gruposComSelos = _grupos.filter(g => g.nome !== IND_NOME && _selos.some(s => s.grupo?.id === g.id)).length;
+  const standaloneCuradas = _selos.filter(s => isIndependent(s) && s.curada).length;
+  const totalCurados = gruposComSelos + standaloneCuradas;
+  const countEl = document.getElementById('curadas-count');
+  if (countEl) countEl.textContent = `${totalCurados} curadas`;
+
   renderDescobertas();
   renderGrupoPanel();
 
