@@ -296,7 +296,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     setExpandedGrupos(prev => { const n = new Set(prev); n.has(nome) ? n.delete(nome) : n.add(nome); return n })
   }
 
-  const GRUPO_COR = '#f2bfd8'
+  const GRUPO_COR = '#c4a0b0'
 
   const anoAtual = hoje.getFullYear()
   const years = Array.from({ length: anoAtual + 3 - 1980 }, (_, i) => 1980 + i)
