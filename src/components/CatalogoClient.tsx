@@ -376,6 +376,11 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
         <button onClick={() => setEpOpen(true)} style={{ background:'transparent', border:'1px dashed var(--border)', color:'var(--muted)', fontSize:'0.75rem', fontFamily:'inherit', padding:'4px 12px', borderRadius:20, cursor:'pointer' }}>
           {selectedEditoras.size > 0 ? '+ adicionar' : '+ selecionar'}
         </button>
+        {selectedEditoras.size > 0 && (
+          <button onClick={() => setSelectedEditoras(new Set())} style={{ background:'transparent', border:'none', color:'var(--muted)', fontSize:'0.75rem', fontFamily:'inherit', padding:'4px 6px', cursor:'pointer', opacity:0.6 }}>
+            limpar
+          </button>
+        )}
       </div>
 
       {/* Autor */}
