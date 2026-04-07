@@ -478,34 +478,16 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
                   const selosDoGrupo = sl.map(s => s.nome_display)
                   const todosAtivos  = selosDoGrupo.length > 0 && selosDoGrupo.every(n => selectedEditoras.has(n))
                   const algumAtivo   = selosDoGrupo.some(n => selectedEditoras.has(n))
-                  const expanded     = expandedGrupos.has(grupo.nome)
-                  const pillBorder   = todosAtivos || algumAtivo ? grupo.cor : 'var(--border)'
-                  const pillColor    = todosAtivos || algumAtivo ? grupo.cor : 'var(--muted)'
                   return (
-                    <React.Fragment key={grupo.nome}>
-                      {/* Group pill */}
-                      <span style={{ display:'inline-flex', alignItems:'center', borderRadius:20, border:`1px solid ${pillBorder}`, overflow:'hidden', fontSize:'0.75rem', background: algumAtivo ? `${grupo.cor}14` : 'transparent' }}>
-                        <button onClick={() => toggleGrupo(grupo.nome)} style={{ background:'none', border:'none', cursor:'pointer', fontFamily:'inherit', fontSize:'0.75rem', padding:'4px 6px 4px 10px', color: pillColor, display:'flex', alignItems:'center', gap:4 }}>
-                          {todosAtivos && <span style={{ fontSize:'0.6rem' }}>✓</span>}
-                          {grupo.nome}
-                        </button>
-                        <button onClick={() => toggleExpandGrupo(grupo.nome)} style={{ background:'none', border:'none', borderLeft:`1px solid ${pillBorder}28`, cursor:'pointer', padding:'4px 7px', color:'var(--muted)', fontSize:'0.55rem', lineHeight:1, fontFamily:'inherit', opacity:0.7 }}>
-                          {expanded ? '▾' : '▸'}
-                        </button>
-                      </span>
-                      {/* Expanded member selos */}
-                      {expanded && sl.map(s => (
-                        <button key={s.nome_display} onClick={() => toggleEditora(s.nome_display)} style={{
-                          display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:20, border:'1px solid', cursor:'pointer', fontSize:'0.75rem', fontFamily:'inherit',
-                          borderColor: selectedEditoras.has(s.nome_display) ? grupo.cor : 'var(--border)',
-                          color:       selectedEditoras.has(s.nome_display) ? grupo.cor : 'var(--muted)',
-                          background:  selectedEditoras.has(s.nome_display) ? `${grupo.cor}14` : 'transparent',
-                        }}>
-                          {selectedEditoras.has(s.nome_display) && <span style={{ fontSize:'0.6rem' }}>✓</span>}
-                          {s.nome_display}
-                        </button>
-                      ))}
-                    </React.Fragment>
+                    <button key={grupo.nome} onClick={() => toggleGrupo(grupo.nome)} style={{
+                      display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:20, border:'1px solid', cursor:'pointer', fontSize:'0.75rem', fontFamily:'inherit',
+                      borderColor: grupo.cor || 'var(--border)',
+                      color:       algumAtivo ? grupo.cor : 'var(--muted)',
+                      background:  algumAtivo ? `${grupo.cor}18` : 'transparent',
+                    }}>
+                      {todosAtivos && <span style={{ fontSize:'0.6rem' }}>✓</span>}
+                      {grupo.nome}
+                    </button>
                   )
                 })}
                 {selosSemGrupo.map(s => (
