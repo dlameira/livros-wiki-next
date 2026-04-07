@@ -65,7 +65,7 @@ export default function BubbleViz({ data }: Props) {
     simRef.current?.stop()
 
     const width = container.clientWidth
-    const height = Math.max(500, Math.min(750, window.innerHeight - 180))
+    const height = Math.max(200, Math.min(350, (window.innerHeight - 180) / 2))
     svgEl.setAttribute('width', String(width))
     svgEl.setAttribute('height', String(height))
     const svg = d3.select(svgEl)
@@ -83,7 +83,7 @@ export default function BubbleViz({ data }: Props) {
       .attr('stroke-width', 1)
 
     const maxCount = d3.max(data, d => d.count) || 1
-    const rScale = d3.scaleSqrt().domain([0, maxCount]).range([3, Math.min(width, height) * 0.04])
+    const rScale = d3.scaleSqrt().domain([0, maxCount]).range([2, Math.min(width, height) * 0.06])
 
     const nodes: SimNode[] = data.map(d => ({
       ...d,
