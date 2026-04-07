@@ -405,7 +405,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
         {livrosVisiveis.length === 0 && !loading && (
           <div style={{ gridColumn:'1/-1', textAlign:'center', color:'#333', padding:'80px 0', fontSize:'0.9rem' }}>nenhum livro encontrado</div>
         )}
-        {livrosVisiveis.map(livro => <BookCard key={livro.id} livro={livro} onClick={() => setDetalhe(livro)} />)}
+        {livrosVisiveis.map((livro, i) => <BookCard key={livro.id} livro={livro} priority={i < 12} onClick={() => setDetalhe(livro)} />)}
       </div>
 
       {/* Sentinel */}
@@ -556,7 +556,7 @@ function SettingBtn({ active, onClick, children }: { active: boolean; onClick: (
   )
 }
 
-function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
+function BookCard({ livro, priority, onClick }: { livro: Livro; priority?: boolean; onClick: () => void }) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [hovered,   setHovered]   = useState(false)
   return (
@@ -566,7 +566,7 @@ function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
         {livro.capa_url
           ? <>
               {!imgLoaded && <div className="cover-skeleton" style={{ position:'absolute', inset:0 }} />}
-              <img src={`/api/cover/${livro.isbn}?size=m`} alt={livro.titulo} loading="lazy" onLoad={() => setImgLoaded(true)}
+              <img src={`/api/cover/${livro.isbn}?size=m`} alt={livro.titulo} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} onLoad={() => setImgLoaded(true)}
                 style={{ position:'absolute', bottom:0, left:0, width:'100%', height:'auto', display:'block', opacity: imgLoaded ? 1 : 0, transition:'opacity 0.35s' }} />
             </>
           : <div style={{ width:'100%', height:'100%' }} />

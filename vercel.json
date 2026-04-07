@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/warm-covers",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}
