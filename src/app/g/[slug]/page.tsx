@@ -49,13 +49,19 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   )
   const selos: Selo[] = ((await selosRes.json()).data || []).filter((s: Selo) => s.nome_display)
 
-  // Datas para classificação de atividade
-  const hoje = new Date().toISOString().slice(0, 10)
-  const anoAtual = new Date().getFullYear()
+  // Datas para classificação de atividade (alinhadas com a home)
+  const hojeDate = new Date()
+  const hoje = hojeDate.toISOString().slice(0, 10)
+  const anoAtual = hojeDate.getFullYear()
+  const mes = hojeDate.getMonth()
+  const dia = hojeDate.getDate()
   const anoInicioStr = `${anoAtual}-01-01`
-  const seisAtras = new Date()
-  seisAtras.setMonth(seisAtras.getMonth() - 6)
-  const seisAtrasStr = seisAtras.toISOString().slice(0, 10)
+  const quatroAtras = new Date(anoAtual, mes - 4, 1)
+  const quatroAtrasStr = quatroAtras.toISOString().slice(0, 10)
+  const amanha = new Date(anoAtual, mes, dia + 1)
+  const amanhaStr = amanha.toISOString().slice(0, 10)
+  const prevLimite = new Date(anoAtual, mes + 3, 1)
+  const prevLimiteStr = prevLimite.toISOString().slice(0, 10)
 
   // Fetch covers + contagens para TODOS os selos em paralelo
   // Ativo/inativo é definido dinamicamente: nLanc > 0 || nPrev > 0
@@ -74,13 +80,13 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
       const filterLanc = encodeURIComponent(JSON.stringify({
         _and: [
           { editora: { _eq: selo.nome_display } },
-          { data_publicacao: { _gte: seisAtrasStr, _lte: hoje } },
+          { data_publicacao: { _gte: quatroAtrasStr, _lte: hoje } },
         ]
       }))
       const filterPrev = encodeURIComponent(JSON.stringify({
         _and: [
           { editora: { _eq: selo.nome_display } },
-          { data_publicacao: { _gt: hoje } },
+          { data_publicacao: { _gte: amanhaStr, _lte: prevLimiteStr } },
         ]
       }))
       const filterLancAno = encodeURIComponent(JSON.stringify({
@@ -106,7 +112,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
     })
   )
 
-  // Ativo = tem lançamento nos últimos 6 meses OU livro em pré-venda
+  // Ativo = tem lançamento nos últimos 4 meses OU livro em pré-venda
   const selosAtivos = selos.filter(s => (lancPorSelo[s.nome_display] || 0) > 0 || (prevPorSelo[s.nome_display] || 0) > 0)
 
   const totalLivros  = Object.values(contagemPorSelo).reduce((sum, n) => sum + n, 0)
