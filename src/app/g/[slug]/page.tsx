@@ -1,9 +1,11 @@
 import { DIRECTUS_URL } from '@/lib/directus'
-import { SELO_INFO, HITS, SELO_LOGOS_FALLBACK, SELO_INSTAGRAM, GRUPO_DESCRICAO } from '@/lib/selos-data'
+import { SELO_INFO, HITS, SELO_LOGOS_FALLBACK, SELO_INSTAGRAM, SELO_IG_STATS, GRUPO_DESCRICAO } from '@/lib/selos-data'
 import { notFound } from 'next/navigation'
 import SelosGrid, { type SeloEnriquecido, type Capa } from './SelosGrid'
 import MosaicoScroll from './MosaicoScroll'
+import GroupCharts from './GroupCharts'
 import SiteHeader from '@/components/SiteHeader'
+import { getMonthlyBookCounts } from '@/lib/queries/group-monthly'
 
 export const dynamic = 'force-dynamic'
 
@@ -130,6 +132,27 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
     mosaico = (await res.json()).data || []
   }
 
+  // ── Dados para gráficos ────────────────────────────────────────────────────
+  const monthlyData = await getMonthlyBookCounts(nomesSelos).catch(() => [])
+
+  function parseFollowers(s: string): number {
+    if (s.endsWith('K')) return parseFloat(s) * 1000
+    if (s.endsWith('M')) return parseFloat(s) * 1_000_000
+    return parseInt(s.replace(/\./g, ''), 10)
+  }
+
+  const scatterData = selos.map(selo => {
+    const handle = SELO_INSTAGRAM[selo.nome_display]
+    const igStats = handle ? SELO_IG_STATS[handle] : null
+    return {
+      name: selo.nome_display,
+      catalogSize: contagemPorSelo[selo.nome_display] || 0,
+      followers: igStats ? parseFollowers(igStats.seg) : 0,
+    }
+  }).filter(d => d.followers > 0 && d.catalogSize > 0)
+
+  const particleData = mosaico.map(l => ({ id: l.id, editora: l.editora }))
+
   // Monta array enriquecido para o componente client
   // ativo = calculado dinamicamente (nLanc > 0 || nPrev > 0), não o campo do Directus
   const selosEnriquecidos: SeloEnriquecido[] = selos.map(selo => {
@@ -153,7 +176,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Georgia, serif' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
 
       <SiteHeader />
 
@@ -162,24 +185,30 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
         padding: '64px 64px 48px',
         borderBottom: '1px solid var(--border)',
         display: 'flex',
-        alignItems: 'flex-end',
+        alignItems: 'flex-start',
         justifyContent: 'space-between',
-        gap: '32px',
+        gap: '48px',
         flexWrap: 'wrap',
       }}>
-        <div>
+        <div style={{ flex: '1 1 320px', minWidth: 0 }}>
           <div style={{ fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c0392b', marginBottom: '12px' }}>
             grupo editorial
           </div>
-          <h1 style={{ fontSize: '3rem', fontWeight: 'normal', letterSpacing: '0.04em', color: 'var(--text)', lineHeight: 1, marginBottom: '10px' }}>
+          <h1 className="font-serif" style={{ fontSize: '3rem', fontWeight: 'normal', letterSpacing: '0.04em', color: 'var(--text)', lineHeight: 1, marginBottom: '10px' }}>
             {grupo.nome}
           </h1>
           {GRUPO_DESCRICAO[grupo.nome] && (
-            <div style={{ marginTop: '16px', maxWidth: '580px', fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.75, borderLeft: '2px solid var(--border)', paddingLeft: '16px' }}>
+            <div className="font-serif" style={{ marginTop: '16px', maxWidth: '580px', fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.75, borderLeft: '2px solid var(--border)', paddingLeft: '16px' }}>
               {GRUPO_DESCRICAO[grupo.nome]}
             </div>
           )}
         </div>
+        <GroupCharts
+          monthlyData={monthlyData}
+          scatterData={scatterData}
+          particles={particleData}
+          groupColor={grupo.cor || '#c0392b'}
+        />
       </div>
 
       {/* ── STATS ────────────────────────────────────────── */}

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import postgres from 'postgres'
-
-const sql = postgres(process.env.DATABASE_URL!, { max: 3, idle_timeout: 10 })
+import { sql } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
   const q           = req.nextUrl.searchParams.get('q')?.trim() || ''

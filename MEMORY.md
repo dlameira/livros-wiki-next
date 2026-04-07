@@ -36,6 +36,10 @@ Aprendizados e decisões acumuladas ao longo das sessões de trabalho.
 - **`pg` no Vercel/Turbopack**: precisa de `serverExternalPackages: ['pg']` no `next.config.ts` — sem isso, Turbopack não resolve o módulo e o build falha em ~11 segundos
 - **Cache de imagens**: proxy `/api/cover/[isbn]` com `s-maxage=2592000` (30 dias). Primeiro acesso lento (Metabooks), subsequentes rápidos via CDN Vercel
 - **Imagens**: usar `size=m` (não `s` — qualidade ruim, não `l` — desnecessário)
+- **Tokens Metabooks (BR0204988)**:
+  - cover: `c0f55cf9-c553-47ec-ac2f-8c4f4f57325c`
+  - mmo: `3209f07b-649f-4b6a-a845-6446663630c7`
+  - metadata: `61fbd184-1747-4568-b6da-854d297b46d0`
 - **`next/font`**: font loaders precisam ser `const` no module scope — não podem estar dentro de arrays ou objetos
 
 ---

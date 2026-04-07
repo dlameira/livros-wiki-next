@@ -94,7 +94,7 @@ export default function SelosGrid({ selos }: { selos: SeloEnriquecido[] }) {
   }, [selos, sort])
 
   const btnStyle = (key: SortKey): React.CSSProperties => ({
-    fontFamily: 'Georgia, serif',
+    fontFamily: 'inherit',
     fontSize: '0.68rem',
     letterSpacing: '0.06em',
     color: sort === key ? '#c0392b' : 'var(--muted)',
