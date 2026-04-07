@@ -27,6 +27,11 @@ const GROUP_COLORS: Record<string, string> = {
   'Fósforo':             '#cb4335',
   'DBA':                 '#839192',
   'Arquipélago':         '#5d6d7e',
+  'Escotilha':           '#6d4c41',
+  'Callis':              '#5c6bc0',
+  'VR':                  '#00897b',
+  'IBEP-Nacional':       '#7e57c2',
+  'Universo dos Livros': '#2e7d32',
 }
 
 function getColor(g: string): string {
@@ -48,7 +53,7 @@ function paddedHull(nodes: SimNode[], pad: number): string | null {
   const pts: [number, number][] = []
   for (const n of nodes) {
     const r = n.r + pad
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
       pts.push([n.x! + Math.cos(a) * r, n.y! + Math.sin(a) * r])
     }
   }
@@ -77,43 +82,65 @@ export default function BubbleViz({ data }: Props) {
     cancelAnimationFrame(driftRef.current)
 
     const width = container.clientWidth
-    const height = Math.max(550, Math.min(780, window.innerHeight - 180))
+    const height = Math.max(600, Math.min(900, window.innerHeight - 140))
     svgEl.setAttribute('width', String(width))
     svgEl.setAttribute('height', String(height))
     const svg = d3.select(svgEl)
     svg.selectAll('*').remove()
 
     const maxCount = d3.max(data, d => d.count) || 1
-    const rScale = d3.scaleSqrt().domain([0, maxCount]).range([5, Math.min(width, height) * 0.06])
+    const rScale = d3.scaleSqrt().domain([0, maxCount]).range([5, Math.min(width, height) * 0.055])
 
     const nodes: SimNode[] = data.map(d => ({
       ...d,
       r: rScale(d.count),
       color: getColor(d.grupo),
-      x: width / 2 + (Math.random() - 0.5) * width * 0.6,
-      y: height / 2 + (Math.random() - 0.5) * height * 0.6,
+      x: width / 2 + (Math.random() - 0.5) * width * 0.4,
+      y: height / 2 + (Math.random() - 0.5) * height * 0.4,
     }))
 
-    // Pack-based cluster centers — use d3.pack to compute ideal group positions
-    // so larger groups get more space and distribution is even
-    const groupTotals = grupos.map(g => ({
-      name: g,
-      total: data.filter(d => d.grupo === g).reduce((s, d) => s + d.count, 0),
-    }))
-
-    const packRoot = d3.hierarchy({ children: groupTotals } as unknown)
-      .sum((d: unknown) => (d as { total?: number }).total || 0)
-
-    const pack = d3.pack<unknown>()
-      .size([width * 0.88, height * 0.88])
-      .padding(40)
-
-    const packed = pack(packRoot)
-    const clusterCenters: Record<string, { x: number; y: number }> = {}
-    packed.children?.forEach((child) => {
-      const g = (child.data as { name: string }).name
-      clusterCenters[g] = { x: child.x + width * 0.06, y: child.y + height * 0.06 }
+    // Estimate "weight" per group to allocate space
+    const groupWeight = new Map<string, number>()
+    grupos.forEach(g => {
+      const gNodes = data.filter(d => d.grupo === g)
+      const sumR = gNodes.reduce((s, d) => s + rScale(d.count), 0)
+      groupWeight.set(g, sumR + gNodes.length * 4) // radius sum + padding
     })
+
+    // Lay out groups in rows, filling left to right
+    const margin = 60
+    const usableW = width - margin * 2
+    const clusterCenters: Record<string, { x: number; y: number }> = {}
+
+    let cx = margin
+    let cy = margin + 40
+    let rowHeight = 0
+
+    for (const g of grupos) {
+      const w = Math.max(80, (groupWeight.get(g) || 80) * 1.2)
+      const h = Math.max(60, w * 0.7)
+
+      if (cx + w > width - margin && cx > margin) {
+        // Next row
+        cx = margin
+        cy += rowHeight + 50
+        rowHeight = 0
+      }
+
+      clusterCenters[g] = { x: cx + w / 2, y: cy + h / 2 }
+      cx += w + 30
+      rowHeight = Math.max(rowHeight, h)
+    }
+
+    // Scale to fit vertically
+    const maxY = cy + rowHeight + margin
+    if (maxY > height) {
+      const scale = (height - 40) / maxY
+      for (const g of grupos) {
+        clusterCenters[g].x = clusterCenters[g].x * scale + (width * (1 - scale)) / 2
+        clusterCenters[g].y = clusterCenters[g].y * scale
+      }
+    }
 
     // Layers
     const hullLayer = svg.append('g').attr('class', 'hulls')
@@ -121,25 +148,23 @@ export default function BubbleViz({ data }: Props) {
     const labelLayer = svg.append('g').attr('class', 'labels')
     const gLabelLayer = svg.append('g').attr('class', 'group-labels')
 
-    // Hulls
     const hullPaths: Record<string, d3.Selection<SVGPathElement, unknown, null, undefined>> = {}
     const gLabels: Record<string, d3.Selection<SVGTextElement, unknown, null, undefined>> = {}
     grupos.forEach(g => {
       hullPaths[g] = hullLayer.append('path')
         .attr('fill', getColor(g)).attr('fill-opacity', 0.06)
-        .attr('stroke', getColor(g)).attr('stroke-opacity', 0.35)
-        .attr('stroke-width', 2)
+        .attr('stroke', getColor(g)).attr('stroke-opacity', 0.3)
+        .attr('stroke-width', 1.5)
       gLabels[g] = gLabelLayer.append('text')
         .attr('text-anchor', 'middle')
-        .attr('fill', getColor(g)).attr('opacity', 0.55)
-        .attr('font-size', '0.58rem').attr('font-weight', 600)
-        .attr('letter-spacing', '0.1em')
+        .attr('fill', getColor(g)).attr('opacity', 0.5)
+        .attr('font-size', '0.55rem').attr('font-weight', 600)
+        .attr('letter-spacing', '0.08em')
         .text(g.toUpperCase())
     })
 
     const tooltip = tooltipRef.current
 
-    // Circles
     const circles = circleLayer.selectAll<SVGCircleElement, SimNode>('circle')
       .data(nodes).join('circle')
       .attr('r', d => d.r)
@@ -167,56 +192,53 @@ export default function BubbleViz({ data }: Props) {
         if (tooltip) tooltip.style.opacity = '0'
       })
 
-    // Bubble labels
     const bLabels = labelLayer.selectAll<SVGTextElement, SimNode>('text')
       .data(nodes.filter(d => d.r > 18)).join('text')
       .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
       .attr('fill', '#fff').attr('pointer-events', 'none').attr('opacity', 0.9)
-      .attr('font-size', d => Math.max(6, Math.min(11, d.r * 0.28)) + 'px')
+      .attr('font-size', d => Math.max(6, Math.min(10, d.r * 0.28)) + 'px')
       .attr('font-weight', 500)
       .text(d => {
         const max = Math.floor(d.r / 3.2)
         return d.selo.length > max ? d.selo.substring(0, max) + '…' : d.selo
       })
 
-    // Simulation
+    // Simulation — very strong cluster + collide
     const sim = d3.forceSimulation<SimNode>(nodes)
-      .force('x', d3.forceX<SimNode>(d => clusterCenters[d.grupo]?.x || width / 2).strength(0.18))
-      .force('y', d3.forceY<SimNode>(d => clusterCenters[d.grupo]?.y || height / 2).strength(0.18))
-      .force('collide', d3.forceCollide<SimNode>(d => d.r + 2.5).strength(1).iterations(5))
-      .alphaDecay(0.018)
-      .velocityDecay(0.38)
+      .force('x', d3.forceX<SimNode>(d => clusterCenters[d.grupo]?.x || width / 2).strength(0.25))
+      .force('y', d3.forceY<SimNode>(d => clusterCenters[d.grupo]?.y || height / 2).strength(0.25))
+      .force('collide', d3.forceCollide<SimNode>(d => d.r + 2).strength(1).iterations(6))
+      .alphaDecay(0.02)
+      .velocityDecay(0.4)
 
     simRef.current = sim
 
     function update() {
-      // Clamp to bounds
       for (const n of nodes) {
         n.x = Math.max(n.r + 2, Math.min(width - n.r - 2, n.x!))
-        n.y = Math.max(n.r + 18, Math.min(height - n.r - 2, n.y!))
+        n.y = Math.max(n.r + 16, Math.min(height - n.r - 2, n.y!))
       }
       circles.attr('cx', d => d.x!).attr('cy', d => d.y!)
       bLabels.attr('x', d => d.x!).attr('y', d => d.y!)
-
       grupos.forEach(g => {
         const gn = nodes.filter(n => n.grupo === g)
-        hullPaths[g].attr('d', paddedHull(gn, 12) || '')
+        hullPaths[g].attr('d', paddedHull(gn, 10) || '')
         if (gn.length) {
-          const minY = d3.min(gn, n => n.y! - n.r) || 0
-          gLabels[g].attr('x', d3.mean(gn, n => n.x!) || 0).attr('y', minY - 12)
+          gLabels[g]
+            .attr('x', d3.mean(gn, n => n.x!) || 0)
+            .attr('y', (d3.min(gn, n => n.y! - n.r) || 0) - 10)
         }
       })
     }
 
     sim.on('tick', update)
-
     sim.on('end', () => {
       let t = 0
       function drift() {
-        t += 0.0015
+        t += 0.0012
         for (const n of nodes) {
-          n.x! += Math.sin(t * 1.1 + n.count * 0.04) * 0.05
-          n.y! += Math.cos(t * 0.8 + n.count * 0.03) * 0.04
+          n.x! += Math.sin(t + n.count * 0.04) * 0.04
+          n.y! += Math.cos(t * 0.7 + n.count * 0.03) * 0.03
         }
         update()
         driftRef.current = requestAnimationFrame(drift)
@@ -225,7 +247,6 @@ export default function BubbleViz({ data }: Props) {
     })
   }, [data, grupos, selected])
 
-  // Highlight filter
   useEffect(() => {
     if (!svgRef.current) return
     const svg = d3.select(svgRef.current)
@@ -234,15 +255,15 @@ export default function BubbleViz({ data }: Props) {
       .attr('opacity', d => selected && d.grupo !== selected ? 0.08 : 0.82)
     svg.selectAll('.hulls path').each(function () {
       const el = d3.select(this)
-      const isMatch = !selected || el.attr('stroke') === getColor(selected)
+      const match = !selected || el.attr('stroke') === getColor(selected)
       el.transition().duration(250)
-        .attr('fill-opacity', isMatch ? 0.06 : 0.01)
-        .attr('stroke-opacity', isMatch ? 0.35 : 0.05)
+        .attr('fill-opacity', match ? 0.06 : 0.01)
+        .attr('stroke-opacity', match ? 0.3 : 0.04)
     })
     svg.selectAll('.group-labels text').each(function () {
       const el = d3.select(this)
-      const isMatch = !selected || el.text() === selected.toUpperCase()
-      el.transition().duration(250).attr('opacity', isMatch ? 0.55 : 0.1)
+      const match = !selected || el.text() === selected.toUpperCase()
+      el.transition().duration(250).attr('opacity', match ? 0.5 : 0.08)
     })
   }, [selected])
 
