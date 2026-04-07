@@ -64,7 +64,7 @@ export default function BubbleViz({ data }: Props) {
     if (!container || !svgEl || !data.length) return
     simRef.current?.stop()
 
-    const width = Math.floor(container.clientWidth / 3)
+    const width = Math.floor(container.clientWidth / 2)
     const height = Math.max(200, Math.min(350, (window.innerHeight - 180) / 2))
     svgEl.setAttribute('width', String(width))
     svgEl.setAttribute('height', String(height))
@@ -167,15 +167,15 @@ export default function BubbleViz({ data }: Props) {
       .attr('font-weight', 500)
       .text(d => { const m = Math.floor(d.r / 3); return d.selo.length > m ? d.selo.substring(0, m) + '…' : d.selo })
 
-    // Wiggle force
+    // Wiggle force — stronger for visible movement
     let tick = 0
     function wiggleForce() {
       return () => {
         tick++
-        const t = tick * 0.005
+        const t = tick * 0.004
         for (const n of nodes) {
-          n.vx! += Math.sin(t + (n.index || 0) * 0.4) * 0.012
-          n.vy! += Math.cos(t * 0.6 + (n.index || 0) * 0.3) * 0.01
+          n.vx! += Math.sin(t + (n.index || 0) * 0.7) * 0.06
+          n.vy! += Math.cos(t * 0.5 + (n.index || 0) * 0.5) * 0.05
         }
       }
     }
