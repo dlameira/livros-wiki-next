@@ -51,9 +51,9 @@ type Props = {
 type Preset = 'prevenda' | 'lancamentos' | 'tudo'
 
 function buildDates(preset: Preset) {
-  const hoje = new Date(); const ano = hoje.getFullYear(); const mes = hoje.getMonth()
-  if (preset === 'prevenda')    return { from: new Date(),                to: new Date(ano, mes + 3, 1) }
-  if (preset === 'lancamentos') return { from: new Date(ano, mes - 6, 1), to: new Date(ano, mes + 2, 1) }
+  const hoje = new Date(); const ano = hoje.getFullYear(); const mes = hoje.getMonth(); const dia = hoje.getDate()
+  if (preset === 'prevenda')    { const amanha = new Date(ano, mes, dia + 1); return { from: amanha, to: new Date(ano, mes + 3, 1) } }
+  if (preset === 'lancamentos') return { from: new Date(ano, mes - 4, 1), to: hoje }
   return { from: null, to: null }
 }
 

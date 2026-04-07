@@ -22,8 +22,8 @@ export type Selo = {
 async function getInitialData() {
   const hoje = new Date()
   const anoAtual = hoje.getFullYear()
-  const dataFrom = new Date(anoAtual, hoje.getMonth() - 6, 1).toISOString().split('T')[0]
-  const dataTo   = new Date(anoAtual, hoje.getMonth() + 2, 1).toISOString().split('T')[0]
+  const dataFrom = new Date(anoAtual, hoje.getMonth() - 4, 1).toISOString().split('T')[0]
+  const dataTo   = hoje.toISOString().split('T')[0]
 
   // Busca selos curados com grupo aninhado
   const CAMPO_CURADORIA = 'curada'
