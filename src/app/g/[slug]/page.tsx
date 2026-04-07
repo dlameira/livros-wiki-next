@@ -45,7 +45,7 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
   if (!grupo) notFound()
 
   const selosRes = await fetch(
-    `${DIRECTUS_URL}/items/selos?filter[grupo][_eq]=${grupo.id}&fields=id,nome_display,total_livros_mb,ativo,logo_url,descricao&limit=200&sort=nome_display`
+    `${DIRECTUS_URL}/items/selos?filter[grupo][_eq]=${grupo.id}&fields=id,nome_display,total_livros_mb,curada,logo_url,descricao&limit=200&sort=nome_display`
   )
   const selos: Selo[] = ((await selosRes.json()).data || []).filter((s: Selo) => s.nome_display)
 
