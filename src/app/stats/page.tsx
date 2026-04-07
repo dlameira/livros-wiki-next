@@ -21,12 +21,15 @@ export default async function StatsPage() {
   const countByEditora = new Map(countRows.map(r => [r.editora, r.count]))
   const grupoMap = new Map(grupos.map(g => [g.id, g.nome]))
 
-  // Only selos that belong to a defined group (exclude unaffiliated mass)
-  const bubbleData = selos
-    .filter(s => s.grupo && grupoMap.has(s.grupo) && (countByEditora.get(s.nome_display) || 0) > 0)
+  // All curated selos: grouped ones in clusters, ungrouped as independents
+  const curadaRes = await fetch(`${DIRECTUS_URL}/items/selos?fields=id,nome_display,grupo&limit=500&filter[curada][_eq]=true`)
+  const curadas: Selo[] = (await curadaRes.json()).data || []
+
+  const bubbleData = curadas
+    .filter(s => (countByEditora.get(s.nome_display) || 0) > 0)
     .map(s => ({
       selo: s.nome_display,
-      grupo: grupoMap.get(s.grupo)!,
+      grupo: (s.grupo && grupoMap.has(s.grupo)) ? grupoMap.get(s.grupo)! : '',
       count: countByEditora.get(s.nome_display) || 0,
     }))
     .sort((a, b) => b.count - a.count)
