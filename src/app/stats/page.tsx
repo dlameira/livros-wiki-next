@@ -1,4 +1,5 @@
 import { DIRECTUS_URL } from '@/lib/directus'
+import { sql } from '@/lib/db'
 import SiteHeader from '@/components/SiteHeader'
 import BubbleViz from './BubbleViz'
 
@@ -8,33 +9,24 @@ type Grupo = { id: number; nome: string }
 type Selo = { id: number; nome_display: string; grupo: number }
 
 export default async function StatsPage() {
-  const [gruposRes, selosRes] = await Promise.all([
+  const [gruposRes, selosRes, countRows] = await Promise.all([
     fetch(`${DIRECTUS_URL}/items/grupos_editoriais?fields=id,nome&limit=50`),
     fetch(`${DIRECTUS_URL}/items/selos?fields=id,nome_display,grupo&limit=500`),
+    sql`SELECT editora, COUNT(*)::int AS count FROM biblioteca GROUP BY editora`,
   ])
 
   const grupos: Grupo[] = (await gruposRes.json()).data || []
   const selos: Selo[] = (await selosRes.json()).data || []
 
-  // Count books per selo in parallel
-  const counts = await Promise.all(
-    selos.map(async (selo) => {
-      const filter = encodeURIComponent(JSON.stringify({ editora: { _eq: selo.nome_display } }))
-      const res = await fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filter}`)
-      const j = await res.json()
-      return { seloId: selo.id, count: j.meta?.filter_count || 0 }
-    })
-  )
-
-  const countMap = new Map(counts.map(c => [c.seloId, c.count]))
+  const countByEditora = new Map(countRows.map(r => [r.editora, r.count]))
   const grupoMap = new Map(grupos.map(g => [g.id, g.nome]))
 
   const bubbleData = selos
-    .filter(s => (countMap.get(s.id) || 0) > 0)
+    .filter(s => (countByEditora.get(s.nome_display) || 0) > 0)
     .map(s => ({
       selo: s.nome_display,
       grupo: grupoMap.get(s.grupo) || 'Outros',
-      count: countMap.get(s.id) || 0,
+      count: countByEditora.get(s.nome_display) || 0,
     }))
     .sort((a, b) => b.count - a.count)
 
