@@ -296,6 +296,8 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
     setExpandedGrupos(prev => { const n = new Set(prev); n.has(nome) ? n.delete(nome) : n.add(nome); return n })
   }
 
+  const GRUPO_COR = '#f2bfd8'
+
   const anoAtual = hoje.getFullYear()
   const years = Array.from({ length: anoAtual + 3 - 1980 }, (_, i) => 1980 + i)
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -303,6 +305,12 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const selosPorGrupo  = grupos.map(g => ({ grupo: g, selos: selosFiltrados.filter(s => s.grupo?.nome === g.nome) })).filter(g => g.selos.length > 0)
   const selosSemGrupo  = selosFiltrados.filter(s => !s.grupo || s.grupo.nome === 'Independente')
   const selAdicionadas = selos.filter(s => selectedEditoras.has(s.nome_display))
+
+  // Lista plana e ordenada alfabeticamente
+  const itensEditoras: ({ type: 'grupo'; nome: string; grupo: typeof grupos[0]; selos: typeof selos } | { type: 'selo'; nome: string; selo: typeof selos[0] })[] = [
+    ...selosPorGrupo.map(({ grupo, selos: sl }) => ({ type: 'grupo' as const, nome: grupo.nome, grupo, selos: sl })),
+    ...selosSemGrupo.map(s => ({ type: 'selo' as const, nome: s.nome_display, selo: s })),
+  ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
 
   const gridMinMax     = gridSize === 'compacta' ? '90px' : gridSize === 'grande' ? '160px' : '120px'
   const livrosVisiveis = ocultarSemImagem ? livros.filter(l => l.capa_url) : livros
@@ -474,33 +482,36 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'12px 16px' }}>
               <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                {selosPorGrupo.map(({ grupo, selos: sl }) => {
-                  const selosDoGrupo = sl.map(s => s.nome_display)
-                  const todosAtivos  = selosDoGrupo.length > 0 && selosDoGrupo.every(n => selectedEditoras.has(n))
-                  const algumAtivo   = selosDoGrupo.some(n => selectedEditoras.has(n))
+                {itensEditoras.map(item => {
+                  if (item.type === 'grupo') {
+                    const selosDoGrupo = item.selos.map(s => s.nome_display)
+                    const todosAtivos  = selosDoGrupo.length > 0 && selosDoGrupo.every(n => selectedEditoras.has(n))
+                    const algumAtivo   = selosDoGrupo.some(n => selectedEditoras.has(n))
+                    return (
+                      <button key={item.nome} onClick={() => toggleGrupo(item.nome)} style={{
+                        display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:20, border:'1px solid', cursor:'pointer', fontSize:'0.75rem', fontFamily:'inherit',
+                        borderColor: GRUPO_COR,
+                        color:       algumAtivo ? GRUPO_COR : 'var(--muted)',
+                        background:  algumAtivo ? `${GRUPO_COR}28` : 'transparent',
+                      }}>
+                        {todosAtivos && <span style={{ fontSize:'0.6rem' }}>✓</span>}
+                        {item.nome}
+                      </button>
+                    )
+                  }
+                  const s = item.selo
                   return (
-                    <button key={grupo.nome} onClick={() => toggleGrupo(grupo.nome)} style={{
+                    <button key={item.nome} onClick={() => toggleEditora(s.nome_display)} style={{
                       display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:20, border:'1px solid', cursor:'pointer', fontSize:'0.75rem', fontFamily:'inherit',
-                      borderColor: grupo.cor || 'var(--border)',
-                      color:       algumAtivo ? grupo.cor : 'var(--muted)',
-                      background:  algumAtivo ? `${grupo.cor}18` : 'transparent',
+                      borderColor: selectedEditoras.has(s.nome_display) ? 'var(--accent)' : 'var(--border)',
+                      color:       selectedEditoras.has(s.nome_display) ? 'var(--accent-fg)' : 'var(--muted)',
+                      background:  selectedEditoras.has(s.nome_display) ? 'rgba(251,242,54,0.12)' : 'transparent',
                     }}>
-                      {todosAtivos && <span style={{ fontSize:'0.6rem' }}>✓</span>}
-                      {grupo.nome}
+                      {selectedEditoras.has(s.nome_display) && <span style={{ fontSize:'0.6rem' }}>✓</span>}
+                      {s.nome_display}
                     </button>
                   )
                 })}
-                {selosSemGrupo.map(s => (
-                  <button key={s.nome_display} onClick={() => toggleEditora(s.nome_display)} style={{
-                    display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:20, border:'1px solid', cursor:'pointer', fontSize:'0.75rem', fontFamily:'inherit',
-                    borderColor: selectedEditoras.has(s.nome_display) ? 'var(--accent)' : 'var(--border)',
-                    color:       selectedEditoras.has(s.nome_display) ? 'var(--accent-fg)' : 'var(--muted)',
-                    background:  selectedEditoras.has(s.nome_display) ? 'rgba(251,242,54,0.12)' : 'transparent',
-                  }}>
-                    {selectedEditoras.has(s.nome_display) && <span style={{ fontSize:'0.6rem' }}>✓</span>}
-                    {s.nome_display}
-                  </button>
-                ))}
               </div>
             </div>
             <div style={{ padding:'14px 20px', borderTop:'1px solid var(--border)', display:'flex', gap:8, alignItems:'center', flexShrink:0 }}>
