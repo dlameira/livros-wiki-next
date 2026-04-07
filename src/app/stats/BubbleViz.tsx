@@ -52,7 +52,6 @@ export default function BubbleViz({ data }: Props) {
   const tooltipRef = useRef<HTMLDivElement>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const simRef = useRef<d3.Simulation<SimNode, undefined> | null>(null)
-  const driftRef = useRef<number>(0)
 
   // Named groups sorted by size, plus "independentes" label
   const namedGrupos = [...new Set(data.filter(d => d.grupo).map(d => d.grupo))].sort((a, b) => {
@@ -67,12 +66,12 @@ export default function BubbleViz({ data }: Props) {
     const container = containerRef.current
     const svgEl = svgRef.current
     if (!container || !svgEl || !data.length) return
-    cancelAnimationFrame(driftRef.current)
+    simRef.current?.stop()
 
     const width = container.clientWidth
-    const height = Math.max(600, Math.min(900, window.innerHeight - 140))
+    // Height will be set after layout calculation
+    let height = 600
     svgEl.setAttribute('width', String(width))
-    svgEl.setAttribute('height', String(height))
     const svg = d3.select(svgEl)
     svg.selectAll('*').remove()
 
@@ -113,18 +112,13 @@ export default function BubbleViz({ data }: Props) {
       rowH = Math.max(rowH, diam)
     }
 
-    // Scale everything to fit
-    const totalH = cy + rowH + margin
-    const totalW = cx + margin
-    const scaleY = totalH > height ? (height - 20) / totalH : 1
-    const scaleX = totalW > width ? (width - 20) / totalW : 1
-    const scale = Math.min(scaleX, scaleY)
-    if (scale < 1) {
-      for (const g of namedGrupos) {
-        clusterCenters[g].x = clusterCenters[g].x * scale + (width * (1 - scale)) / 2
-        clusterCenters[g].y = clusterCenters[g].y * scale + 10
-      }
-    }
+    // Fit height to content + space for independents below
+    const indepCount = nodes.filter(n => n.indep).length
+    const indepRows = Math.ceil(indepCount / 12)
+    const indepSpace = indepRows * 40 + 40
+    const totalH = cy + rowH + margin + (indepCount > 0 ? indepSpace : 0)
+    height = Math.max(400, Math.min(totalH, 1000))
+    svgEl.setAttribute('height', String(height))
 
     // Layers
     const hullLayer = svg.append('g').attr('class', 'hulls')
@@ -192,13 +186,30 @@ export default function BubbleViz({ data }: Props) {
 
     // Simulation
     // Grouped: strong pull to cluster. Independents: weak pull to center, spread out.
+    // Custom wiggle force — injects tiny velocity each tick for gentle motion
+    // Collide stays active because simulation never stops
+    let tick = 0
+    function wiggleForce() {
+      return () => {
+        tick++
+        for (const n of nodes) {
+          const t = tick * 0.008
+          const speed = n.indep ? 0.08 : 0.02
+          n.vx! += Math.sin(t + n.count * 0.04 + (n.index || 0) * 0.5) * speed
+          n.vy! += Math.cos(t * 0.7 + n.count * 0.03 + (n.index || 0) * 0.3) * speed
+        }
+      }
+    }
+
     const sim = d3.forceSimulation<SimNode>(nodes)
       .force('x', d3.forceX<SimNode>(d => d.indep ? width / 2 : (clusterCenters[d.grupo]?.x || width / 2)).strength(d => d.indep ? 0.012 : 0.35))
       .force('y', d3.forceY<SimNode>(d => d.indep ? height / 2 : (clusterCenters[d.grupo]?.y || height / 2)).strength(d => d.indep ? 0.012 : 0.35))
       .force('collide', d3.forceCollide<SimNode>(d => d.r + 1.5).strength(1).iterations(8))
       .force('charge', d3.forceManyBody<SimNode>().strength(d => d.indep ? -2 : 0))
-      .alphaDecay(0.02)
-      .velocityDecay(0.4)
+      .force('wiggle', wiggleForce())
+      .alphaTarget(0.02) // never fully stops — keeps collide active
+      .alphaDecay(0)
+      .velocityDecay(0.45)
 
     simRef.current = sim
 
@@ -219,20 +230,6 @@ export default function BubbleViz({ data }: Props) {
     }
 
     sim.on('tick', update)
-    sim.on('end', () => {
-      let t = 0
-      function drift() {
-        t += 0.001
-        for (const n of nodes) {
-          const speed = n.indep ? 0.12 : 0.03
-          n.x! += Math.sin(t + n.count * 0.04) * speed
-          n.y! += Math.cos(t * 0.7 + n.count * 0.03) * speed
-        }
-        update()
-        driftRef.current = requestAnimationFrame(drift)
-      }
-      drift()
-    })
   }, [data, namedGrupos, hasIndep, selected])
 
   // Highlight
@@ -264,7 +261,7 @@ export default function BubbleViz({ data }: Props) {
     draw()
     const ro = new ResizeObserver(draw)
     if (containerRef.current) ro.observe(containerRef.current)
-    return () => { ro.disconnect(); simRef.current?.stop(); cancelAnimationFrame(driftRef.current) }
+    return () => { ro.disconnect(); simRef.current?.stop() }
   }, [draw])
 
   return (
