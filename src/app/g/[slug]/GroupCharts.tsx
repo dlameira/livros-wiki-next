@@ -1,18 +1,16 @@
 'use client'
 
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import * as d3 from 'd3'
 
 /* ── Types ──────────────────────────────────────────────────────── */
 
 type MonthlyPoint = { month: string; count: number }
-type ScatterPoint = { name: string; catalogSize: number; followers: number }
-type Particle = { id: number; editora: string }
+type TimelineBook = { id: number; titulo: string; editora: string; data: string }
 
 type Props = {
   monthlyData: MonthlyPoint[]
-  scatterData: ScatterPoint[]
-  particles: Particle[]
+  timelineData: TimelineBook[]
   groupColor?: string
 }
 
@@ -21,12 +19,6 @@ type Props = {
 function getCSSVar(name: string): string {
   if (typeof window === 'undefined') return '#888'
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'
-}
-
-function formatK(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
-  if (n >= 1_000) return (n / 1_000).toFixed(0) + 'K'
-  return String(n)
 }
 
 /* ── Chart 1: Monthly Line ──────────────────────────────────────── */
@@ -42,8 +34,8 @@ function MonthlyLineChart({ data, color }: { data: MonthlyPoint[]; color: string
     if (!container || !svgRef.current || !data.length) return
 
     const width = container.clientWidth
-    const height = 160
-    const margin = { top: 12, right: 12, bottom: 24, left: 36 }
+    const height = 140
+    const margin = { top: 8, right: 8, bottom: 22, left: 32 }
     const w = width - margin.left - margin.right
     const h = height - margin.top - margin.bottom
 
@@ -62,85 +54,60 @@ function MonthlyLineChart({ data, color }: { data: MonthlyPoint[]; color: string
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 
-    // Grid lines
-    g.append('g').attr('class', 'grid')
-      .selectAll('line')
-      .data(y.ticks(4))
-      .join('line')
-      .attr('x1', 0).attr('x2', w)
-      .attr('y1', d => y(d)).attr('y2', d => y(d))
+    // Grid
+    g.selectAll('.grid-line').data(y.ticks(3)).join('line')
+      .attr('x1', 0).attr('x2', w).attr('y1', d => y(d)).attr('y2', d => y(d))
       .attr('stroke', border).attr('stroke-dasharray', '2,3')
 
     // Area
-    const area = d3.area<typeof points[0]>()
-      .x(d => x(d.date))
-      .y0(h)
-      .y1(d => y(d.count))
-      .curve(d3.curveMonotoneX)
-
     g.append('path').datum(points)
-      .attr('d', area)
-      .attr('fill', color).attr('opacity', 0.1)
+      .attr('d', d3.area<typeof points[0]>().x(d => x(d.date)).y0(h).y1(d => y(d.count)).curve(d3.curveMonotoneX))
+      .attr('fill', color).attr('opacity', 0.08)
 
     // Line
-    const line = d3.line<typeof points[0]>()
-      .x(d => x(d.date))
-      .y(d => y(d.count))
-      .curve(d3.curveMonotoneX)
-
     g.append('path').datum(points)
-      .attr('d', line)
-      .attr('fill', 'none')
-      .attr('stroke', color)
-      .attr('stroke-width', 1.5)
+      .attr('d', d3.line<typeof points[0]>().x(d => x(d.date)).y(d => y(d.count)).curve(d3.curveMonotoneX))
+      .attr('fill', 'none').attr('stroke', color).attr('stroke-width', 1.5)
 
     // X axis
     g.append('g').attr('transform', `translate(0,${h})`)
       .call(d3.axisBottom(x).ticks(5).tickFormat(d => d3.timeFormat('%Y')(d as Date)))
       .call(g => g.select('.domain').attr('stroke', border))
       .call(g => g.selectAll('.tick line').attr('stroke', border))
-      .call(g => g.selectAll('.tick text').attr('fill', muted).attr('font-size', '0.6rem'))
+      .call(g => g.selectAll('.tick text').attr('fill', muted).attr('font-size', '0.55rem'))
 
     // Y axis
     g.append('g')
-      .call(d3.axisLeft(y).ticks(4).tickFormat(d => String(d)))
+      .call(d3.axisLeft(y).ticks(3).tickFormat(d => String(d)))
       .call(g => g.select('.domain').remove())
       .call(g => g.selectAll('.tick line').remove())
-      .call(g => g.selectAll('.tick text').attr('fill', muted).attr('font-size', '0.6rem'))
+      .call(g => g.selectAll('.tick text').attr('fill', muted).attr('font-size', '0.55rem'))
 
-    // Tooltip overlay
+    // Tooltip
     const tooltip = tooltipRef.current
     const bisect = d3.bisector<typeof points[0], Date>(d => d.date).left
-
-    const overlay = g.append('rect')
-      .attr('width', w).attr('height', h)
-      .attr('fill', 'none').attr('pointer-events', 'all')
-
     const dot = g.append('circle').attr('r', 3).attr('fill', color).attr('opacity', 0)
-    const vLine = g.append('line').attr('stroke', border).attr('stroke-dasharray', '3,3').attr('opacity', 0)
 
-    overlay.on('mousemove', (event) => {
-      const [mx] = d3.pointer(event)
-      const date = x.invert(mx)
-      const i = bisect(points, date, 1)
-      const d0 = points[i - 1], d1 = points[i]
-      if (!d0) return
-      const d = d1 && (date.getTime() - d0.date.getTime()) > (d1.date.getTime() - date.getTime()) ? d1 : d0
-
-      dot.attr('cx', x(d.date)).attr('cy', y(d.count)).attr('opacity', 1)
-      vLine.attr('x1', x(d.date)).attr('x2', x(d.date)).attr('y1', 0).attr('y2', h).attr('opacity', 0.4)
-
-      if (tooltip) {
-        tooltip.style.opacity = '1'
-        tooltip.style.left = `${x(d.date) + margin.left}px`
-        tooltip.style.top = `${y(d.count) + margin.top - 32}px`
-        tooltip.textContent = `${d3.timeFormat('%b %Y')(d.date)}: ${d.count}`
-      }
-    }).on('mouseleave', () => {
-      dot.attr('opacity', 0)
-      vLine.attr('opacity', 0)
-      if (tooltip) tooltip.style.opacity = '0'
-    })
+    g.append('rect').attr('width', w).attr('height', h).attr('fill', 'none').attr('pointer-events', 'all')
+      .on('mousemove', (event) => {
+        const [mx] = d3.pointer(event)
+        const date = x.invert(mx)
+        const i = bisect(points, date, 1)
+        const d0 = points[i - 1], d1 = points[i]
+        if (!d0) return
+        const d = d1 && (date.getTime() - d0.date.getTime()) > (d1.date.getTime() - date.getTime()) ? d1 : d0
+        dot.attr('cx', x(d.date)).attr('cy', y(d.count)).attr('opacity', 1)
+        if (tooltip) {
+          tooltip.style.opacity = '1'
+          tooltip.style.left = `${x(d.date) + margin.left}px`
+          tooltip.style.top = `${y(d.count) + margin.top - 28}px`
+          tooltip.textContent = `${d3.timeFormat('%b %Y')(d.date)}: ${d.count}`
+        }
+      })
+      .on('mouseleave', () => {
+        dot.attr('opacity', 0)
+        if (tooltip) tooltip.style.opacity = '0'
+      })
   }, [data, color])
 
   useEffect(() => {
@@ -151,24 +118,24 @@ function MonthlyLineChart({ data, color }: { data: MonthlyPoint[]; color: string
   }, [draw])
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
-      <div style={{ fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
+    <div ref={containerRef} style={{ position: 'relative', flex: '1 1 0', minWidth: 200 }}>
+      <div style={{ fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
         publicações / mês — 5 anos
       </div>
       <svg ref={svgRef} style={{ display: 'block', width: '100%' }} />
       <div ref={tooltipRef} style={{
         position: 'absolute', pointerEvents: 'none', opacity: 0,
         background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4,
-        padding: '3px 8px', fontSize: '0.65rem', color: 'var(--text)', whiteSpace: 'nowrap',
-        transform: 'translateX(-50%)', transition: 'opacity 0.15s',
+        padding: '3px 8px', fontSize: '0.6rem', color: 'var(--text)', whiteSpace: 'nowrap',
+        transform: 'translateX(-50%)', transition: 'opacity 0.12s',
       }} />
     </div>
   )
 }
 
-/* ── Chart 2: Catalog × Followers Scatter ───────────────────────── */
+/* ── Chart 2: Book Timeline (year, chronological) ───────────────── */
 
-function CatalogScatter({ data }: { data: ScatterPoint[] }) {
+function BookTimeline({ data, color }: { data: TimelineBook[]; color: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -179,8 +146,8 @@ function CatalogScatter({ data }: { data: ScatterPoint[] }) {
     if (!container || !svgRef.current || !data.length) return
 
     const width = container.clientWidth
-    const height = 160
-    const margin = { top: 12, right: 12, bottom: 28, left: 44 }
+    const height = 140
+    const margin = { top: 8, right: 8, bottom: 22, left: 8 }
     const w = width - margin.left - margin.right
     const h = height - margin.top - margin.bottom
 
@@ -190,90 +157,95 @@ function CatalogScatter({ data }: { data: ScatterPoint[] }) {
 
     const muted = getCSSVar('--muted')
     const border = getCSSVar('--border')
-    const accent = getCSSVar('--accent-fg')
 
-    const x = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.catalogSize) || 1])
-      .nice().range([0, w])
+    // Parse dates and assign colors per editora
+    const editoras = [...new Set(data.map(d => d.editora))]
+    const colorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(editoras)
 
-    const y = d3.scaleLog()
-      .domain([d3.min(data, d => d.followers) || 1000, d3.max(data, d => d.followers) || 100000])
-      .nice().range([h, 0])
+    type BookNode = TimelineBook & { date: Date }
+    const books: BookNode[] = data
+      .map(d => ({ ...d, date: new Date(d.data + 'T12:00:00') }))
+      .filter(d => !isNaN(d.date.getTime()))
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+
+    if (!books.length) return
+
+    const now = new Date()
+    const yearStart = new Date(now.getFullYear(), 0, 1)
+    const yearEnd = new Date(now.getFullYear(), 11, 31)
+
+    const x = d3.scaleTime().domain([yearStart, yearEnd]).range([0, w])
+
+    // Spread books vertically with jitter to avoid overlap
+    // Group by week, then distribute vertically within each week
+    const weekBuckets = new Map<number, BookNode[]>()
+    books.forEach(b => {
+      const week = Math.floor((b.date.getTime() - yearStart.getTime()) / (7 * 24 * 60 * 60 * 1000))
+      if (!weekBuckets.has(week)) weekBuckets.set(week, [])
+      weekBuckets.get(week)!.push(b)
+    })
+
+    type PlotNode = BookNode & { px: number; py: number; r: number }
+    const plotNodes: PlotNode[] = []
+    weekBuckets.forEach((bucket) => {
+      bucket.forEach((b, i) => {
+        plotNodes.push({
+          ...b,
+          px: x(b.date),
+          py: h / 2 + (i - (bucket.length - 1) / 2) * 7,
+          r: 3,
+        })
+      })
+    })
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 
-    // Grid
-    g.append('g').selectAll('line').data(y.ticks(3)).join('line')
-      .attr('x1', 0).attr('x2', w).attr('y1', d => y(d)).attr('y2', d => y(d))
-      .attr('stroke', border).attr('stroke-dasharray', '2,3')
+    // Today marker
+    if (now >= yearStart && now <= yearEnd) {
+      const todayX = x(now)
+      g.append('line')
+        .attr('x1', todayX).attr('x2', todayX).attr('y1', 0).attr('y2', h)
+        .attr('stroke', color).attr('stroke-dasharray', '3,3').attr('opacity', 0.4)
+      g.append('text')
+        .attr('x', todayX).attr('y', -2).attr('text-anchor', 'middle')
+        .attr('fill', muted).attr('font-size', '0.45rem').attr('letter-spacing', '0.06em')
+        .text('HOJE')
+    }
 
-    // X axis
+    // X axis (months)
     g.append('g').attr('transform', `translate(0,${h})`)
-      .call(d3.axisBottom(x).ticks(4).tickFormat(d => String(d)))
+      .call(d3.axisBottom(x).ticks(d3.timeMonth.every(1)).tickFormat(d => d3.timeFormat('%b')(d as Date)))
       .call(g => g.select('.domain').attr('stroke', border))
       .call(g => g.selectAll('.tick line').attr('stroke', border))
-      .call(g => g.selectAll('.tick text').attr('fill', muted).attr('font-size', '0.55rem'))
-
-    // Y axis
-    g.append('g')
-      .call(d3.axisLeft(y).ticks(3).tickFormat(d => formatK(d as number)))
-      .call(g => g.select('.domain').remove())
-      .call(g => g.selectAll('.tick line').remove())
-      .call(g => g.selectAll('.tick text').attr('fill', muted).attr('font-size', '0.55rem'))
-
-    // Axis labels
-    g.append('text')
-      .attr('x', w / 2).attr('y', h + 24)
-      .attr('text-anchor', 'middle').attr('fill', muted).attr('font-size', '0.5rem')
-      .attr('letter-spacing', '0.08em')
-      .text('CATÁLOGO')
-
-    g.append('text')
-      .attr('transform', `rotate(-90)`).attr('x', -h / 2).attr('y', -36)
-      .attr('text-anchor', 'middle').attr('fill', muted).attr('font-size', '0.5rem')
-      .attr('letter-spacing', '0.08em')
-      .text('SEGUIDORES')
+      .call(g => g.selectAll('.tick text').attr('fill', muted).attr('font-size', '0.5rem'))
 
     const tooltip = tooltipRef.current
 
-    // Dots
+    // Book dots
     g.selectAll('circle')
-      .data(data)
+      .data(plotNodes)
       .join('circle')
-      .attr('cx', d => x(d.catalogSize))
-      .attr('cy', d => y(d.followers))
-      .attr('r', 5)
-      .attr('fill', accent)
-      .attr('opacity', 0.7)
+      .attr('cx', d => d.px)
+      .attr('cy', d => Math.max(d.r, Math.min(h - d.r, d.py)))
+      .attr('r', d => d.r)
+      .attr('fill', d => colorScale(d.editora))
+      .attr('opacity', 0.6)
       .attr('cursor', 'pointer')
       .on('mouseenter', (event, d) => {
-        d3.select(event.currentTarget).attr('r', 7).attr('opacity', 1)
+        d3.select(event.currentTarget).attr('r', 5).attr('opacity', 1)
         if (tooltip) {
+          const dateStr = d3.timeFormat('%d %b')(d.date)
+          tooltip.innerHTML = `<strong style="display:block;margin-bottom:2px">${d.titulo}</strong><span style="opacity:0.6">${d.editora} · ${dateStr}</span>`
           tooltip.style.opacity = '1'
-          tooltip.innerHTML = `<strong>${d.name}</strong><br/>${d.catalogSize} livros · ${formatK(d.followers)} seg.`
-          tooltip.style.left = `${x(d.catalogSize) + margin.left}px`
-          tooltip.style.top = `${y(d.followers) + margin.top - 44}px`
+          tooltip.style.left = `${d.px + margin.left}px`
+          tooltip.style.top = `${Math.max(d.r, Math.min(h - d.r, d.py)) + margin.top - 48}px`
         }
       })
       .on('mouseleave', (event) => {
-        d3.select(event.currentTarget).attr('r', 5).attr('opacity', 0.7)
+        d3.select(event.currentTarget).attr('r', 3).attr('opacity', 0.6)
         if (tooltip) tooltip.style.opacity = '0'
       })
-
-    // Labels (only on wider screens)
-    if (w > 280) {
-      g.selectAll('.label')
-        .data(data)
-        .join('text')
-        .attr('class', 'label')
-        .attr('x', d => x(d.catalogSize) + 8)
-        .attr('y', d => y(d.followers) + 3)
-        .attr('fill', muted)
-        .attr('font-size', '0.5rem')
-        .attr('opacity', 0.7)
-        .text(d => d.name)
-    }
-  }, [data])
+  }, [data, color])
 
   useEffect(() => {
     draw()
@@ -283,129 +255,33 @@ function CatalogScatter({ data }: { data: ScatterPoint[] }) {
   }, [draw])
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
-      <div style={{ fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-        catálogo × seguidores
+    <div ref={containerRef} style={{ position: 'relative', flex: '1 1 0', minWidth: 200 }}>
+      <div style={{ fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+        livros {new Date().getFullYear()} — por selo
       </div>
       <svg ref={svgRef} style={{ display: 'block', width: '100%' }} />
       <div ref={tooltipRef} style={{
         position: 'absolute', pointerEvents: 'none', opacity: 0,
         background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4,
-        padding: '4px 10px', fontSize: '0.62rem', color: 'var(--text)', whiteSpace: 'nowrap',
-        transform: 'translateX(-50%)', transition: 'opacity 0.15s', lineHeight: 1.5,
+        padding: '5px 10px', fontSize: '0.6rem', color: 'var(--text)', whiteSpace: 'nowrap',
+        transform: 'translateX(-50%)', transition: 'opacity 0.12s', lineHeight: 1.4,
+        maxWidth: 220,
       }} />
-    </div>
-  )
-}
-
-/* ── Chart 3: Book Particles ────────────────────────────────────── */
-
-function BookParticles({ books }: { books: Particle[] }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const animRef = useRef<number>(0)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    const container = containerRef.current
-    if (!canvas || !container || !books.length) return
-
-    const width = container.clientWidth
-    const height = 140
-    canvas.width = width * 2
-    canvas.height = height * 2
-    canvas.style.width = `${width}px`
-    canvas.style.height = `${height}px`
-    const ctx = canvas.getContext('2d')!
-    ctx.scale(2, 2)
-
-    // Assign colors per editora
-    const editoras = [...new Set(books.map(b => b.editora))]
-    const colorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(editoras)
-
-    // Create cluster centers
-    const clusterX: Record<string, number> = {}
-    editoras.forEach((e, i) => {
-      clusterX[e] = (i + 0.5) / editoras.length * width
-    })
-
-    // Initialize particles
-    type Node = { x: number; y: number; vx: number; vy: number; targetX: number; targetY: number; color: string; r: number }
-    const nodes: Node[] = books.map(b => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      targetX: clusterX[b.editora] + (Math.random() - 0.5) * 60,
-      targetY: height / 2 + (Math.random() - 0.5) * 60,
-      color: colorScale(b.editora),
-      r: 2.5 + Math.random() * 1.5,
-    }))
-
-    let time = 0
-
-    function tick() {
-      time += 0.01
-      ctx.clearRect(0, 0, width, height)
-
-      for (const node of nodes) {
-        // Gentle pull toward cluster center
-        node.vx += (node.targetX - node.x) * 0.002
-        node.vy += (node.targetY - node.y) * 0.002
-
-        // Subtle drift
-        node.vx += Math.sin(time + node.x * 0.01) * 0.02
-        node.vy += Math.cos(time + node.y * 0.01) * 0.02
-
-        // Damping
-        node.vx *= 0.98
-        node.vy *= 0.98
-
-        node.x += node.vx
-        node.y += node.vy
-
-        // Boundary
-        if (node.x < 0) node.x = 0
-        if (node.x > width) node.x = width
-        if (node.y < 0) node.y = 0
-        if (node.y > height) node.y = height
-
-        ctx.beginPath()
-        ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2)
-        ctx.fillStyle = node.color
-        ctx.globalAlpha = 0.6
-        ctx.fill()
-      }
-      ctx.globalAlpha = 1
-
-      animRef.current = requestAnimationFrame(tick)
-    }
-
-    tick()
-
-    return () => cancelAnimationFrame(animRef.current)
-  }, [books])
-
-  return (
-    <div ref={containerRef} style={{ width: '100%' }}>
-      <div style={{ fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-        livros recentes por selo
-      </div>
-      <canvas ref={canvasRef} style={{ display: 'block', width: '100%', borderRadius: 4 }} />
     </div>
   )
 }
 
 /* ── Main Export ─────────────────────────────────────────────────── */
 
-export default function GroupCharts({ monthlyData, scatterData, particles, groupColor }: Props) {
+export default function GroupCharts({ monthlyData, timelineData, groupColor }: Props) {
   const color = groupColor || '#c0392b'
 
+  if (!monthlyData.length && !timelineData.length) return null
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', maxWidth: '440px', flexShrink: 0 }}>
-      <MonthlyLineChart data={monthlyData} color={color} />
-      <CatalogScatter data={scatterData} />
-      <BookParticles books={particles} />
+    <div style={{ display: 'flex', gap: '32px', marginTop: '32px', flexWrap: 'wrap' }}>
+      {monthlyData.length > 0 && <MonthlyLineChart data={monthlyData} color={color} />}
+      {timelineData.length > 0 && <BookTimeline data={timelineData} color={color} />}
     </div>
   )
 }
