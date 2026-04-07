@@ -77,7 +77,7 @@ export default function BubbleViz({ data }: Props) {
     svg.selectAll('*').remove()
 
     const maxCount = d3.max(data, d => d.count) || 1
-    const rScale = d3.scaleSqrt().domain([0, maxCount]).range([4, Math.min(width, height) * 0.05])
+    const rScale = d3.scaleSqrt().domain([0, maxCount]).range([3, Math.min(width, height) * 0.038])
 
     const nodes: SimNode[] = data.map(d => ({
       ...d,
@@ -88,34 +88,41 @@ export default function BubbleViz({ data }: Props) {
       y: height / 2 + (Math.random() - 0.5) * height * 0.6,
     }))
 
-    // Cluster centers for named groups via row layout
-    const groupWeights = namedGrupos.map(g => {
-      const gn = data.filter(d => d.grupo === g)
-      return { name: g, w: gn.reduce((s, d) => s + rScale(d.count), 0) + gn.length * 3 }
+    // Cluster centers — estimate actual space each group needs
+    // based on the sum of circle areas, then lay out in rows
+    const groupSizes = namedGrupos.map(g => {
+      const gn = nodes.filter(d => d.grupo === g)
+      // Estimate diameter of a packed circle cluster
+      const totalArea = gn.reduce((s, d) => s + Math.PI * d.r * d.r, 0)
+      const clusterR = Math.sqrt(totalArea / Math.PI) * 1.6 + 20 // ~radius of cluster
+      return { name: g, clusterR }
     })
 
-    const margin = 50
-    const usableW = width - margin * 2
+    const margin = 40
+    const gap = 20
     const clusterCenters: Record<string, { x: number; y: number }> = {}
     let cx = margin, cy = margin + 30, rowH = 0
 
-    for (const gw of groupWeights) {
-      const bw = Math.max(70, gw.w * 1.1)
-      const bh = Math.max(50, bw * 0.6)
-      if (cx + bw > width - margin && cx > margin) {
-        cx = margin; cy += rowH + 45; rowH = 0
+    for (const gs of groupSizes) {
+      const diam = gs.clusterR * 2
+      if (cx + diam > width - margin && cx > margin) {
+        cx = margin; cy += rowH + gap; rowH = 0
       }
-      clusterCenters[gw.name] = { x: cx + bw / 2, y: cy + bh / 2 }
-      cx += bw + 25
-      rowH = Math.max(rowH, bh)
+      clusterCenters[gs.name] = { x: cx + gs.clusterR, y: cy + gs.clusterR }
+      cx += diam + gap
+      rowH = Math.max(rowH, diam)
     }
 
+    // Scale everything to fit
     const totalH = cy + rowH + margin
-    if (totalH > height) {
-      const s = (height - 30) / totalH
+    const totalW = cx + margin
+    const scaleY = totalH > height ? (height - 20) / totalH : 1
+    const scaleX = totalW > width ? (width - 20) / totalW : 1
+    const scale = Math.min(scaleX, scaleY)
+    if (scale < 1) {
       for (const g of namedGrupos) {
-        clusterCenters[g].x = clusterCenters[g].x * s + (width * (1 - s)) / 2
-        clusterCenters[g].y = clusterCenters[g].y * s
+        clusterCenters[g].x = clusterCenters[g].x * scale + (width * (1 - scale)) / 2
+        clusterCenters[g].y = clusterCenters[g].y * scale + 10
       }
     }
 
@@ -186,10 +193,10 @@ export default function BubbleViz({ data }: Props) {
     // Simulation
     // Grouped: strong pull to cluster. Independents: weak pull to center, spread out.
     const sim = d3.forceSimulation<SimNode>(nodes)
-      .force('x', d3.forceX<SimNode>(d => d.indep ? width / 2 : (clusterCenters[d.grupo]?.x || width / 2)).strength(d => d.indep ? 0.015 : 0.25))
-      .force('y', d3.forceY<SimNode>(d => d.indep ? height / 2 : (clusterCenters[d.grupo]?.y || height / 2)).strength(d => d.indep ? 0.015 : 0.25))
-      .force('collide', d3.forceCollide<SimNode>(d => d.r + 2).strength(1).iterations(6))
-      .force('charge', d3.forceManyBody<SimNode>().strength(d => d.indep ? -3 : 0))
+      .force('x', d3.forceX<SimNode>(d => d.indep ? width / 2 : (clusterCenters[d.grupo]?.x || width / 2)).strength(d => d.indep ? 0.012 : 0.35))
+      .force('y', d3.forceY<SimNode>(d => d.indep ? height / 2 : (clusterCenters[d.grupo]?.y || height / 2)).strength(d => d.indep ? 0.012 : 0.35))
+      .force('collide', d3.forceCollide<SimNode>(d => d.r + 1.5).strength(1).iterations(8))
+      .force('charge', d3.forceManyBody<SimNode>().strength(d => d.indep ? -2 : 0))
       .alphaDecay(0.02)
       .velocityDecay(0.4)
 
