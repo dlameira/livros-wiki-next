@@ -554,11 +554,14 @@ function BookCard({ livro, onClick }: { livro: Livro; onClick: () => void }) {
   return (
     <div onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       style={{ cursor:'pointer', transform: hovered ? 'translateY(-4px)' : 'none', transition:'transform 0.15s' }}>
-      <div style={{ position:'relative', width:'100%', aspectRatio:'2/3', background:'var(--bg)', borderRadius:4, overflow:'hidden', marginBottom:9 }}>
+      <div style={{ position:'relative', width:'100%', aspectRatio:'2/3', background:'var(--surface)', borderRadius:4, overflow:'hidden', marginBottom:9 }}>
         {livro.capa_url
-          ? <img src={`/api/cover/${livro.isbn}?size=m`} alt={livro.titulo} loading="lazy" onLoad={() => setImgLoaded(true)}
-              style={{ position:'absolute', bottom:0, left:0, width:'100%', height:'auto', display:'block', opacity: imgLoaded ? 1 : 0, transition:'opacity 0.35s' }} />
-          : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#333', fontSize:'2rem' }}>📖</div>
+          ? <>
+              {!imgLoaded && <div className="cover-skeleton" style={{ position:'absolute', inset:0 }} />}
+              <img src={`/api/cover/${livro.isbn}?size=m`} alt={livro.titulo} loading="lazy" onLoad={() => setImgLoaded(true)}
+                style={{ position:'absolute', bottom:0, left:0, width:'100%', height:'auto', display:'block', opacity: imgLoaded ? 1 : 0, transition:'opacity 0.35s' }} />
+            </>
+          : <div style={{ width:'100%', height:'100%' }} />
         }
       </div>
       <div className="font-serif" style={{ fontSize:'0.82rem', lineHeight:1.35, color: hovered ? 'var(--accent-fg)' : 'var(--text)', marginBottom:3, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', transition:'color 0.15s' }}>

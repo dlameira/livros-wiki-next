@@ -33,3 +33,19 @@ body {
 .font-serif {
   font-family: var(--font-serif), Georgia, serif;
 }
+
+/* Skeleton de capa enquanto carrega */
+@keyframes cover-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.cover-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface) 25%,
+    var(--border)  50%,
+    var(--surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: cover-shimmer 1.6s ease-in-out infinite;
+}
