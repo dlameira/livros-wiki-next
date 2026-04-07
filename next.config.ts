@@ -5,12 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/admin',
-        destination: 'https://directus-production-afdd.up.railway.app/admin',
-        permanent: false,
-      },
-      {
-        source: '/admin/:path*',
-        destination: 'https://directus-production-afdd.up.railway.app/admin/:path*',
+        destination: '/admin.html',
         permanent: false,
       },
     ]

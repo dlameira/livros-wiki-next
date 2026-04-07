@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — livros-wiki</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0f0f0f;
+  --surface: #1a1a1a;
+  --border:  #2a2a2a;
+  --text:    #e8e8e8;
+  --muted:   #888;
+  --accent:  #c8a96e;
+  --green:   #4caf7d;
+  --red:     #e05c5c;
+  --yellow:  #e0b84a;
+  --radius:  6px;
+  --font:    'Georgia', serif;
+  --mono:    'Consolas', monospace;
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+/* ── LOGIN ── */
+#login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+}
+.login-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 48px 40px; width: 360px;
+  text-align: center;
+}
+.login-box h1 { font-size: 1.4rem; font-weight: normal; color: var(--accent); margin-bottom: 8px; }
+.login-box p  { color: var(--muted); font-size: .85rem; margin-bottom: 32px; }
+.login-box input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 14px; border-radius: var(--radius);
+  font-size: .95rem; margin-bottom: 12px; outline: none;
+}
+.login-box input:focus { border-color: var(--accent); }
+.login-box button {
+  width: 100%; background: var(--accent); color: #000; border: none;
+  padding: 11px; border-radius: var(--radius); font-size: .95rem;
+  cursor: pointer; font-family: var(--font); margin-top: 4px;
+}
+.login-box button:hover { opacity: .9; }
+.login-error { color: var(--red); font-size: .85rem; margin-top: 10px; min-height: 20px; }
+
+/* ── LAYOUT ── */
+#app { display: none; }
+header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 32px; display: flex; align-items: center; gap: 24px; height: 52px;
+}
+header .logo { color: var(--accent); font-size: 1rem; letter-spacing: .05em; white-space: nowrap; }
+nav { display: flex; gap: 4px; flex: 1; }
+nav button {
+  background: none; border: none; color: var(--muted); padding: 6px 16px;
+  border-radius: var(--radius); cursor: pointer; font-size: .88rem; font-family: var(--font);
+  transition: color .15s, background .15s;
+}
+nav button:hover { color: var(--text); background: var(--border); }
+nav button.active { color: var(--accent); background: rgba(200,169,110,.1); }
+.logout-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 5px 14px; border-radius: var(--radius); cursor: pointer;
+  font-size: .82rem; font-family: var(--font);
+}
+.logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── COMPONENTES ── */
+h2 { font-size: 1.15rem; font-weight: normal; color: var(--accent); margin-bottom: 20px; }
+h3 { font-size: .95rem; font-weight: normal; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .06em; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+.stat-box { text-align: center; }
+.stat-box .val { font-size: 2rem; color: var(--accent); display: block; }
+.stat-box .lbl { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .75rem;
+  font-family: var(--mono);
+}
+.badge-green { background: rgba(76,175,125,.15); color: var(--green); }
+.badge-yellow { background: rgba(224,184,74,.15); color: var(--yellow); }
+.badge-red { background: rgba(224,92,92,.15); color: var(--red); }
+.badge-gray  { background: var(--border); color: var(--muted); }
+
+btn, .btn {
+  display: inline-block; padding: 7px 16px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: none; color: var(--text);
+  font-size: .88rem; font-family: var(--font); cursor: pointer; text-decoration: none;
+  transition: all .15s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #000; }
+.btn-primary:hover { opacity: .85; }
+.btn-danger { border-color: var(--red); color: var(--red); }
+.btn-sm { padding: 4px 10px; font-size: .8rem; }
+
+/* ── EDITORAS ── */
+.editoras-world {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  align-items: flex-start; padding: 4px; min-height: 80px;
+}
+
+/* Selo tag */
+.selo-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: 5px 11px; font-size: .84rem;
+  cursor: grab; user-select: none; transition: border-color .15s, box-shadow .15s;
+}
+.selo-tag:hover { border-color: var(--accent); }
+.selo-tag.inativo { opacity: .4; }
+.selo-tag.dragging { opacity: .2; cursor: grabbing; }
+.selo-tag.drop-target { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.toggle-selo {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: .75rem; padding: 0 1px; line-height: 1;
+}
+.toggle-selo:hover { color: var(--accent); }
+
+/* Grupo island */
+.grupo-island {
+  display: inline-flex; flex-direction: column; gap: 8px;
+  border: 1.5px solid; border-radius: 8px; padding: 8px 12px 10px;
+  transition: background .15s;
+}
+.grupo-island.drag-over { background: rgba(255,255,255,.04); }
+.grupo-island-header { display: flex; align-items: baseline; gap: 8px; }
+.grupo-island-nome {
+  font-size: .73rem; text-transform: uppercase; letter-spacing: .07em; font-weight: bold;
+}
+.grupo-island-adb {
+  font-size: .7rem; font-style: italic; color: var(--muted);
+  background: none; border: none; border-bottom: 1px dashed transparent;
+  outline: none; font-family: var(--font); min-width: 20px; max-width: 200px;
+  transition: border-color .15s;
+}
+.grupo-island-adb:hover { border-bottom-color: var(--border); }
+.grupo-island-adb:focus { border-bottom-color: var(--accent); color: var(--text); }
+.grupo-island-tags {
+  display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; min-width: 100px;
+}
+.drop-hint { font-size: .75rem; color: var(--border); align-self: center; pointer-events: none; }
+
+/* Add forms */
+.add-form-row { display: flex; gap: 7px; flex-wrap: wrap; }
+.add-form-row input, .add-form-row select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 6px 10px; border-radius: var(--radius); font-size: .82rem;
+  outline: none; flex: 1; min-width: 120px; font-family: var(--font);
+}
+.add-form-row input:focus, .add-form-row select:focus { border-color: var(--accent); }
+
+/* Create group popup */
+.popup-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6);
+  display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+.popup-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 300px; }
+.popup-box h3 { color: var(--accent); font-weight: normal; margin-bottom: 6px; }
+.popup-box .popup-desc { color: var(--muted); font-size: .83rem; margin-bottom: 4px; }
+.popup-box input[type=text] {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 12px; border-radius: var(--radius); font-size: .9rem;
+  outline: none; font-family: var(--font); margin-top: 12px;
+}
+.popup-box input[type=text]:focus { border-color: var(--accent); }
+.add-form-row input:focus, .add-form-row select:focus { border-color: var(--accent); }
+
+/* ── STATS ── */
+.publisher-bar { margin-bottom: 8px; }
+.publisher-bar-label { display: flex; justify-content: space-between; font-size: .83rem; margin-bottom: 3px; }
+.publisher-bar-track { background: var(--border); border-radius: 2px; height: 6px; }
+.publisher-bar-fill  { background: var(--accent); border-radius: 2px; height: 6px; transition: width .4s; }
+
+/* ── SYNC ── */
+.publisher-check-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 12px 0;
+}
+.publisher-check {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 7px 12px; cursor: pointer;
+  user-select: none; font-size: .88rem; transition: border-color .15s;
+}
+.publisher-check:hover { border-color: var(--accent); }
+.publisher-check.selected { border-color: var(--accent); background: rgba(200,169,110,.07); }
+.publisher-check input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; }
+
+.months-row { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+.months-row label { color: var(--muted); font-size: .88rem; }
+.months-row select, .months-row input[type=number] {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 6px 10px; border-radius: var(--radius); font-size: .88rem; outline: none;
+}
+.months-row select:focus, .months-row input:focus { border-color: var(--accent); }
+
+#sync-log-box {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; font-family: var(--mono); font-size: .78rem; color: var(--muted);
+  max-height: 260px; overflow-y: auto; white-space: pre-wrap; margin-top: 16px;
+}
+
+.sync-history td, .sync-history th {
+  padding: 7px 12px; font-size: .83rem; text-align: left; border-bottom: 1px solid var(--border);
+}
+.sync-history th { color: var(--muted); font-weight: normal; font-size: .75rem; text-transform: uppercase; }
+.sync-history tr:last-child td { border-bottom: none; }
+
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── PROGRESS ── */
+.sync-progress-bar-track {
+  background: var(--border); border-radius: 3px; height: 8px; margin: 8px 0;
+}
+.sync-progress-bar-fill {
+  background: var(--accent); border-radius: 3px; height: 8px;
+  transition: width .6s ease; min-width: 2px;
+}
+.sync-progress-msg { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+
+/* ── DESCOBERTAS ── */
+.descobertas-header {
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; user-select: none; padding: 12px 0 8px;
+  border-top: 1px solid var(--border);
+}
+.descobertas-header:hover .descobertas-chevron { color: var(--text); }
+.descobertas-chevron { margin-left: auto; color: var(--muted); font-size: .8rem; transition: transform .2s; }
+.descobertas-chevron.open { transform: rotate(90deg); }
+
+.descobertas-controls {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.descobertas-controls input[type=text] {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 6px 12px; border-radius: var(--radius); font-size: .82rem;
+  outline: none; font-family: var(--font); flex: 1; min-width: 160px;
+}
+.descobertas-controls input:focus { border-color: var(--accent); }
+.descobertas-controls select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 5px 8px; border-radius: var(--radius); font-size: .82rem;
+  outline: none; font-family: var(--font);
+}
+.desc-sel-count { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+.descobertas-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px; margin-top: 6px;
+  max-height: 420px; overflow-y: auto;
+  padding-right: 4px;
+}
+.descoberta-item {
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 10px; font-size: .83rem;
+  cursor: pointer; transition: border-color .12s;
+}
+.descoberta-item:hover { border-color: #444; }
+.descoberta-item.selected { border-color: var(--accent); background: rgba(200,169,110,.06); }
+.desc-top { display: flex; align-items: baseline; gap: 6px; }
+.descoberta-nome {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text); font-size: .84rem;
+}
+.desc-count { font-size: .72rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.desc-bottom { display: flex; gap: 5px; align-items: center; }
+.descoberta-item select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+  padding: 2px 5px; border-radius: var(--radius); font-size: .75rem;
+  outline: none; font-family: var(--font); flex: 1;
+}
+.descoberta-item select:focus { border-color: var(--accent); }
+.desc-btn-ativar {
+  background: none; border: 1px solid var(--green); color: var(--green);
+  padding: 2px 8px; border-radius: var(--radius); font-size: .72rem;
+  cursor: pointer; font-family: var(--font); white-space: nowrap;
+  transition: background .12s;
+}
+.desc-btn-ativar:hover { background: rgba(76,175,125,.15); }
+.desc-btn-del {
+  background: none; border: none; color: #444; font-size: .9rem;
+  cursor: pointer; padding: 0 2px; line-height: 1; transition: color .12s;
+}
+.desc-btn-del:hover { color: var(--red); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 18px; border-radius: var(--radius);
+  font-size: .88rem; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 999;
+}
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>livros-wiki</h1>
+    <p>Painel de administração</p>
+    <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+    <input type="password" id="login-password" placeholder="Senha" autocomplete="current-password">
+    <button onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <span class="logo">livros-wiki / admin</span>
+    <nav>
+      <button class="active" onclick="showTab('selos', this)">Grupos & Selos</button>
+      <button onclick="showTab('stats', this)">Stats</button>
+      <button onclick="showTab('sync', this)">Sync</button>
+    </nav>
+    <button class="logout-btn" onclick="doLogout()">Sair</button>
+  </header>
+
+  <main>
+    <!-- TAB: EDITORAS -->
+    <div id="tab-selos" class="tab-panel active">
+      <h2>Editoras</h2>
+      <p style="color:var(--muted);font-size:.83rem;margin-bottom:20px">
+        <span class="badge badge-green">ativos</span> entram no sync. &nbsp;
+        <span class="badge badge-gray">inativos</span> não sincronizam. &nbsp;
+        Arraste para dentro de um grupo ou solte duas independentes juntas para criar um novo grupo.
+      </p>
+
+      <div id="editoras-world" class="editoras-world"
+           ondragover="onWorldDragOver(event)"
+           ondrop="onWorldDrop(event)">
+        <span style="color:var(--muted);font-size:.88rem"><span class="spinner"></span> Carregando...</span>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+        <div class="card" style="flex:1;min-width:280px">
+          <h3>Nova editora</h3>
+          <div class="add-form-row" style="margin-top:10px">
+            <input id="new-selo-nome"   placeholder="Nome (igual Metabooks)">
+            <input id="new-selo-mbid"   placeholder="MbID" style="max-width:110px">
+            <select id="new-selo-grupo"><option value="">Independente</option></select>
+            <button class="btn btn-sm" onclick="addSelo()">+ Adicionar</button>
+          </div>
+        </div>
+        <div class="card" style="flex:1;min-width:280px">
+          <h3>Novo grupo editorial</h3>
+          <div class="add-form-row" style="margin-top:10px">
+            <input type="text" id="new-grupo-nome" placeholder="Nome do grupo">
+            <input type="text" id="new-grupo-adb"  placeholder="Razão social (adbName)">
+            <input type="color" id="new-grupo-cor" value="#888888" style="height:34px;width:40px;flex:none;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);cursor:pointer">
+            <button class="btn btn-primary btn-sm" onclick="addGrupo()">Criar grupo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descobertas: selos inativos descobertos via Metabooks -->
+      <div id="descobertas-wrap" style="margin-top:8px">
+        <div class="descobertas-header" onclick="toggleDescobertas()">
+          <h3 style="margin:0">Descobertas</h3>
+          <span id="descobertas-count" class="badge badge-gray">—</span>
+          <span style="color:var(--muted);font-size:.78rem">editoras inativas — ative para incluir no sync</span>
+          <span id="descobertas-chevron" class="descobertas-chevron">&#9654;</span>
+        </div>
+        <div id="descobertas-panel" style="display:none">
+          <div class="descobertas-controls">
+            <input type="text" id="desc-search" placeholder="buscar editora…" oninput="renderDescobertas()">
+            <select id="desc-sort" onchange="renderDescobertas()">
+              <option value="count">por nº de livros</option>
+              <option value="nome">por nome</option>
+            </select>
+            <span class="desc-sel-count" id="desc-sel-count"></span>
+            <button class="btn btn-sm" onclick="activateSelected()" id="desc-ativar-sel-btn" style="display:none;border-color:var(--green);color:var(--green)">Ativar selecionadas</button>
+            <button class="btn btn-sm" onclick="selectAllDesc()">Selec. todas</button>
+            <button class="btn btn-sm" onclick="clearSelDesc()">Limpar seleção</button>
+          </div>
+          <div id="descobertas-list" class="descobertas-list">
+            <span style="color:var(--muted);font-size:.84rem">Carregando...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: STATS -->
+    <div id="tab-stats" class="tab-panel">
+      <h2>Stats</h2>
+      <div class="grid-4" id="stats-top" style="margin-bottom:24px">
+        <div class="card stat-box"><span class="val" id="stat-total">—</span><span class="lbl">total de livros</span></div>
+        <div class="card stat-box"><span class="val" id="stat-selos">—</span><span class="lbl">selos ativos</span></div>
+        <div class="card stat-box"><span class="val" id="stat-sinopse">—</span><span class="lbl">com sinopse</span></div>
+        <div class="card stat-box"><span class="val" id="stat-capa">—</span><span class="lbl">com capa</span></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Livros por editora</h3>
+          <div id="bars-editora"></div>
+        </div>
+        <div class="card">
+          <h3>Livros por grupo</h3>
+          <div id="bars-grupo"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SYNC -->
+    <div id="tab-sync" class="tab-panel">
+      <h2>Sync</h2>
+
+      <div class="card" style="margin-bottom:16px">
+        <h3>GitHub Actions Token</h3>
+        <p style="color:var(--muted);font-size:.82rem;margin-bottom:10px">
+          Token pessoal do GitHub com permissão <code style="background:var(--bg);padding:1px 5px;border-radius:3px">workflow</code>.
+          Salvo localmente no navegador.
+        </p>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="password" id="gh-pat" placeholder="github_pat_..." autocomplete="off"
+            style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:var(--radius);font-size:.88rem;outline:none;font-family:var(--mono)"
+            oninput="saveGhPat(this.value)">
+          <span id="gh-pat-status" style="font-size:.8rem;color:var(--muted)"></span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h3>Descobrir Editoras</h3>
+        <p style="color:var(--muted);font-size:.82rem;margin-bottom:12px">
+          Amostra o catálogo Metabooks e adiciona editoras desconhecidas ao Directus como inativas,
+          para revisão na aba Grupos &amp; Selos.
+        </p>
+        <div class="months-row" style="flex-wrap:wrap">
+          <label>Páginas:</label>
+          <input type="number" id="discover-pages" value="500" min="50" max="2000" style="width:80px"
+            oninput="document.getElementById('discover-pages-hint').textContent='≈ '+(parseInt(this.value)||0)*100+' livros'">
+          <span id="discover-pages-hint" style="color:var(--muted);font-size:.8rem">≈ 50000 livros</span>
+          <label style="margin-left:8px">Mín. livros:</label>
+          <input type="number" id="discover-min" value="3" min="1" max="100" style="width:60px">
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn" onclick="triggerDiscover()" id="discover-btn">&#9740; Descobrir editoras</button>
+          <span style="color:var(--muted);font-size:.82rem" id="discover-status"></span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h3>Sync Completo</h3>
+        <p style="color:var(--muted);font-size:.82rem;margin-bottom:12px">
+          Importa todos os ~200k livros portugueses da Metabooks diretamente para o banco de dados.
+          Operação única para montar o catálogo inicial — pode levar ~1 hora.
+          Suporta pausa e retomada.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="triggerFullSync()" id="full-sync-btn">&#9654;&#9654; Iniciar sync completo</button>
+          <button class="btn" onclick="resumeFullSync()" id="full-sync-resume-btn" style="display:none">&#8635; Retomar</button>
+          <span style="color:var(--muted);font-size:.82rem" id="full-sync-status"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Editoras</h3>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button class="btn btn-sm" onclick="selectAll(true)">Todas ativas</button>
+          <button class="btn btn-sm" onclick="selectAll(false)">Nenhuma</button>
+        </div>
+        <div class="publisher-check-grid" id="publisher-checks"></div>
+
+        <div class="months-row">
+          <label>Período:</label>
+          <select id="months-select">
+            <option value="0">Catálogo completo (todos os tempos)</option>
+            <option value="1" selected>Último mês</option>
+            <option value="3">Últimos 3 meses</option>
+            <option value="6">Últimos 6 meses</option>
+            <option value="12">Último ano</option>
+          </select>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="triggerSync()" id="sync-btn">▶ Disparar sync</button>
+          <span style="color:var(--muted);font-size:.82rem" id="sync-status"></span>
+        </div>
+
+        <div id="sync-log-box" style="display:none"></div>
+      </div>
+
+      <div class="card" id="sync-active-card" style="margin-top:16px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <h3 style="margin:0">Em andamento</h3>
+          <button class="btn btn-sm" id="sync-stop-btn" onclick="stopActiveSync()"
+            style="border-color:var(--red);color:var(--red);padding:3px 10px;font-size:.8rem">&#9632; Parar</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:4px">
+          <span id="sync-prog-label">Iniciando...</span>
+          <span id="sync-prog-pct" style="color:var(--accent)">0%</span>
+        </div>
+        <div class="sync-progress-bar-track">
+          <div class="sync-progress-bar-fill" id="sync-prog-fill" style="width:0%"></div>
+        </div>
+        <div class="sync-progress-msg" id="sync-prog-msg"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3>Histórico recente</h3>
+        <div id="sync-history-wrap">
+          <div style="color:var(--muted);font-size:.85rem">Carregando...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- CREATE GROUP POPUP -->
+<div class="popup-overlay" id="create-group-popup" style="display:none">
+  <div class="popup-box">
+    <h3>Criar grupo editorial</h3>
+    <p class="popup-desc" id="popup-desc"></p>
+    <input type="text" id="popup-nome" placeholder="Nome do grupo"
+           onkeydown="if(event.key==='Enter')confirmCreateGroup();if(event.key==='Escape')cancelCreateGroup()">
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
+      <input type="color" id="popup-cor" value="#888888" style="height:34px;width:44px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);cursor:pointer;flex:none">
+      <input type="text" id="popup-adb" placeholder="Razão social Metabooks (opcional)" style="flex:1">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn btn-primary btn-sm" onclick="confirmCreateGroup()">Criar grupo</button>
+      <button class="btn btn-sm" onclick="cancelCreateGroup()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const DIRECTUS = 'https://directus-production-afdd.up.railway.app';
+let token = sessionStorage.getItem('admin_token') || '';
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  try {
+    const r = await fetch(`${DIRECTUS}/auth/login`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password: pw})
+    });
+    if (!r.ok) throw new Error('Credenciais inválidas');
+    const j = await r.json();
+    token = j.data.access_token;
+    sessionStorage.setItem('admin_token', token);
+    showApp();
+  } catch(e) {
+    errEl.textContent = e.message;
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+function doLogout() {
+  sessionStorage.removeItem('admin_token');
+  token = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadSelos();
+  loadStats();
+  loadSyncHistory();
+  loadPublisherChecks();
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const r = await fetch(DIRECTUS + path, {
+    method,
+    headers: {'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (r.status === 401) { doLogout(); return null; }
+  return r.ok ? r.json() : null;
+}
+
+function GET(path)         { return api('GET', path); }
+function POST(path, body)  { return api('POST', path, body); }
+function PATCH(path, body) { return api('PATCH', path, body); }
+function DELETE(path)      { return api('DELETE', path); }
+
+// ── TAB ───────────────────────────────────────────────────────────────────────
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'stats') loadStats();
+  if (name === 'sync')  { loadSyncHistory(); loadPublisherChecks(); showGhPatStatus(); }
+}
+
+// ── EDITORAS ──────────────────────────────────────────────────────────────────
+let _grupos = [], _selos = [];
+let _livrosPorEditora = {}; // map: search_metabooks → count real da biblioteca
+const IND_NOME = 'Independente'; // grupo catch-all — publishers aqui ficam soltos
+
+function isIndependent(s) {
+  return !s.grupo || s.grupo.nome === IND_NOME;
+}
+
+async function loadSelos() {
+  const [gr, se, livrosGrp] = await Promise.all([
+    GET('/items/grupos_editoriais?sort=nome&limit=100&fields=id,nome,cor,adb_name_metabooks'),
+    loadAllSelos(),
+    GET('/items/biblioteca?groupBy[]=editora&aggregate[count]=id&limit=5000')
+  ]);
+  if (!gr || !se) return;
+  _grupos = gr.data;
+  _selos  = se;
+  // Build map editora_name → count
+  _livrosPorEditora = {};
+  for (const row of livrosGrp?.data || []) {
+    if (row.editora) _livrosPorEditora[row.editora] = parseInt(row.count?.id || 0);
+  }
+  renderWorld();
+}
+
+async function loadAllSelos() {
+  // Paginate to load all selos (may exceed 500)
+  const all = [];
+  const PAGE = 500;
+  let page = 1;
+  while (true) {
+    const r = await GET(`/items/selos?sort=nome_display&limit=${PAGE}&page=${page}&fields=id,nome_display,search_metabooks,publisher_mb_id,ativo,grupo.*,total_livros_mb`);
+    if (!r?.data?.length) break;
+    all.push(...r.data);
+    if (r.data.length < PAGE) break;
+    page++;
+  }
+  return all;
+}
+
+function renderWorld() {
+  const world = document.getElementById('editoras-world');
+
+  // Islands (real editorial groups, not Independente)
+  const islands = _grupos.filter(g => g.nome !== IND_NOME).map(g => {
+    const selosG = _selos.filter(s => s.grupo?.id === g.id);
+    const tags = selosG.map(s => seloTagHtml(s)).join('') ||
+      '<span class="drop-hint">arraste editoras aqui</span>';
+    return `
+      <div class="grupo-island" id="island-${g.id}" style="border-color:${g.cor||'#888'}"
+           ondragover="onIslandOver(event,${g.id})"
+           ondragleave="onIslandLeave(event)"
+           ondrop="onIslandDrop(event,${g.id})">
+        <div class="grupo-island-header">
+          <input class="grupo-island-nome-edit" value="${g.nome}"
+            style="color:${g.cor||'#888'};background:none;border:none;border-bottom:1px dashed transparent;outline:none;font-size:.73rem;text-transform:uppercase;letter-spacing:.07em;font-weight:bold;font-family:var(--font);cursor:text;min-width:60px;max-width:180px"
+            onclick="event.stopPropagation()"
+            onblur="saveGrupoNome(${g.id},this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()"
+            onmouseover="this.style.borderBottomColor='var(--border)'"
+            onmouseout="if(document.activeElement!==this)this.style.borderBottomColor='transparent'"
+            onfocus="this.style.borderBottomColor='${g.cor||'#888'}'">
+          <input class="grupo-island-adb" value="${g.adb_name_metabooks||''}"
+            placeholder="razão social"
+            onclick="event.stopPropagation()"
+            onblur="saveGrupoAdb(${g.id},this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()">
+          <button onclick="event.stopPropagation();deleteGrupo(${g.id})"
+            style="background:none;border:none;color:#444;font-size:.9rem;cursor:pointer;padding:0 2px;line-height:1;margin-left:auto"
+            title="Excluir grupo"
+            onmouseover="this.style.color='var(--red)'"
+            onmouseout="this.style.color='#444'">×</button>
+        </div>
+        <div class="grupo-island-tags">${tags}</div>
+      </div>`;
+  }).join('');
+
+  // Standalone: active selos without a real group
+  const standalone = _selos.filter(s => isIndependent(s) && s.ativo).map(s => seloTagHtml(s, true)).join('');
+
+  world.innerHTML = islands + standalone;
+  renderDescobertas();
+
+  // Group selector in add-selo form
+  const sel = document.getElementById('new-selo-grupo');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Independente</option>' +
+      _grupos.filter(g => g.nome !== IND_NOME)
+             .map(g => `<option value="${g.id}"${g.id==cur?' selected':''}>${g.nome}</option>`).join('');
+  }
+}
+
+function seloTagHtml(s, standalone = false) {
+  const extraDrop = standalone
+    ? `ondragover="onTagOver(event,${s.id})"
+       ondragleave="onTagLeave(event)"
+       ondrop="onTagDrop(event,${s.id})"`
+    : '';
+  return `<div class="selo-tag ${s.ativo?'':'inativo'}" id="stag-${s.id}"
+    draggable="true"
+    title="VL=${s.search_metabooks||'—'}${s.publisher_mb_id?' · '+s.publisher_mb_id:''}"
+    ondragstart="onDragStart(event,${s.id})"
+    ondragend="onDragEnd()"
+    ${extraDrop}>
+    <span>${s.nome_display}</span>
+    <button class="toggle-selo" onclick="event.stopPropagation();toggleSelo(${s.id},${s.ativo})">${s.ativo?'●':'○'}</button>
+  </div>`;
+}
+
+async function saveGrupoNome(id, val) {
+  const g = _grupos.find(g => g.id === id);
+  val = val.trim();
+  if (!g || !val || g.nome === val) return;
+  await PATCH(`/items/grupos_editoriais/${id}`, {nome: val});
+  g.nome = val;
+  renderWorld();
+  toast('Nome do grupo salvo');
+}
+
+async function saveGrupoAdb(id, val) {
+  const g = _grupos.find(g => g.id === id);
+  if (!g || g.adb_name_metabooks === val) return;
+  await PATCH(`/items/grupos_editoriais/${id}`, {adb_name_metabooks: val||null});
+  g.adb_name_metabooks = val||null;
+  toast('Razão social salva');
+}
+
+async function deleteGrupo(id) {
+  const g = _grupos.find(g => g.id === id);
+  if (!g) return;
+  const selosG = _selos.filter(s => s.grupo?.id === id);
+  const msg = selosG.length
+    ? `Excluir "${g.nome}"? Os ${selosG.length} selos voltam para independente.`
+    : `Excluir "${g.nome}"?`;
+  if (!confirm(msg)) return;
+  if (selosG.length) {
+    await Promise.all(selosG.map(s => PATCH(`/items/selos/${s.id}`, {grupo: null})));
+    selosG.forEach(s => s.grupo = null);
+  }
+  await DELETE(`/items/grupos_editoriais/${id}`);
+  _grupos = _grupos.filter(g => g.id !== id);
+  renderWorld(); loadPublisherChecks();
+  toast(`Grupo "${g.nome}" excluído`);
+}
+
+// ── DESCOBERTAS ────────────────────────────────────────────────────────────────
+
+let _descSelected = new Set(); // IDs selecionados
+
+function getDescInativos() {
+  return _selos.filter(s => !s.ativo);
+}
+
+function renderDescobertas() {
+  const all     = getDescInativos();
+  const countEl = document.getElementById('descobertas-count');
+  const listEl  = document.getElementById('descobertas-list');
+  if (!listEl) return;
+
+  if (countEl) {
+    countEl.textContent = all.length;
+    countEl.className = 'badge ' + (all.length > 0 ? 'badge-yellow' : 'badge-gray');
+  }
+
+  if (!all.length) {
+    listEl.innerHTML = '<p style="color:var(--muted);font-size:.84rem;padding:4px 0">Nenhuma. Use "Descobrir Editoras" no Sync para amostrar o catálogo Metabooks.</p>';
+    return;
+  }
+
+  // Filter by search
+  const q = (document.getElementById('desc-search')?.value || '').toLowerCase();
+  let items = q ? all.filter(s => s.nome_display.toLowerCase().includes(q)) : all;
+
+  // Sort
+  const sort = document.getElementById('desc-sort')?.value || 'count';
+  if (sort === 'count') {
+    const cnt = s => _livrosPorEditora[s.search_metabooks] || _livrosPorEditora[s.nome_display] || s.total_livros_mb || 0;
+    items.sort((a, b) => cnt(b) - cnt(a) || a.nome_display.localeCompare(b.nome_display));
+  } else {
+    items.sort((a, b) => a.nome_display.localeCompare(b.nome_display));
+  }
+
+  const grupoOpts = _grupos.filter(g => g.nome !== IND_NOME)
+    .map(g => `<option value="${g.id}">${g.nome}</option>`).join('');
+
+  listEl.innerHTML = items.map(s => {
+    const real = _livrosPorEditora[s.search_metabooks] || _livrosPorEditora[s.nome_display] || 0;
+    const cnt  = real
+      ? `<span class="desc-count" title="${real.toLocaleString('pt-BR')} livros no catálogo">${real.toLocaleString('pt-BR')}</span>`
+      : (s.total_livros_mb ? `<span class="desc-count" style="opacity:.5" title="estimativa Metabooks">${s.total_livros_mb.toLocaleString('pt-BR')}*</span>` : '');
+    const sel  = _descSelected.has(s.id) ? ' selected' : '';
+    return `<div class="descoberta-item${sel}" id="desc-${s.id}"
+      draggable="true"
+      ondragstart="onDescDragStart(event,${s.id})"
+      ondragend="onDragEnd()"
+      onclick="toggleDescSel(${s.id}, event)">
+      <div class="desc-top">
+        <span class="descoberta-nome" title="${s.publisher_mb_id||s.nome_display}">${s.nome_display}</span>
+        ${cnt}
+      </div>
+      <div class="desc-bottom">
+        <select onchange="assignGrupoDescoberta(${s.id},this.value)" onclick="event.stopPropagation()" title="Atribuir grupo">
+          <option value="">sem grupo</option>${grupoOpts}
+        </select>
+        <button class="desc-btn-ativar" onclick="event.stopPropagation();activateDescoberta(${s.id})">ativar</button>
+        <button class="desc-btn-del" onclick="event.stopPropagation();deleteDescoberta(${s.id})" title="Remover">×</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateDescSelUI();
+}
+
+function toggleDescSel(id, event) {
+  if (_descSelected.has(id)) _descSelected.delete(id);
+  else _descSelected.add(id);
+  const el = document.getElementById(`desc-${id}`);
+  if (el) el.classList.toggle('selected', _descSelected.has(id));
+  updateDescSelUI();
+}
+
+function updateDescSelUI() {
+  const n   = _descSelected.size;
+  const cnt = document.getElementById('desc-sel-count');
+  const btn = document.getElementById('desc-ativar-sel-btn');
+  if (cnt) cnt.textContent = n > 0 ? `${n} selecionada${n !== 1 ? 's' : ''}` : '';
+  if (btn) btn.style.display = n > 0 ? '' : 'none';
+}
+
+function selectAllDesc() {
+  const q = (document.getElementById('desc-search')?.value || '').toLowerCase();
+  getDescInativos()
+    .filter(s => !q || s.nome_display.toLowerCase().includes(q))
+    .forEach(s => _descSelected.add(s.id));
+  renderDescobertas();
+}
+
+function clearSelDesc() {
+  _descSelected.clear();
+  renderDescobertas();
+}
+
+async function activateSelected() {
+  if (!_descSelected.size) return;
+  const ids = [..._descSelected];
+  const btn = document.getElementById('desc-ativar-sel-btn');
+  btn.disabled = true;
+  btn.textContent = 'ativando…';
+  // Batch in groups of 10
+  for (let i = 0; i < ids.length; i += 10) {
+    await Promise.all(ids.slice(i, i + 10).map(id => PATCH(`/items/selos/${id}`, {ativo: true})));
+    ids.slice(i, i + 10).forEach(id => {
+      const s = _selos.find(s => s.id === id);
+      if (s) s.ativo = true;
+    });
+  }
+  _descSelected.clear();
+  renderWorld();
+  loadPublisherChecks();
+  toast(`${ids.length} editora${ids.length !== 1 ? 's' : ''} ativada${ids.length !== 1 ? 's' : ''}`);
+}
+
+function toggleDescobertas() {
+  const panel   = document.getElementById('descobertas-panel');
+  const chevron = document.getElementById('descobertas-chevron');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  chevron.classList.toggle('open', !open);
+}
+
+async function activateDescoberta(id) {
+  await PATCH(`/items/selos/${id}`, {ativo: true});
+  const s = _selos.find(s => s.id === id);
+  if (s) s.ativo = true;
+  _descSelected.delete(id);
+  renderWorld();
+  loadPublisherChecks();
+  toast('Editora ativada');
+}
+
+async function deleteDescoberta(id) {
+  const s = _selos.find(s => s.id === id);
+  if (!confirm(`Remover "${s?.nome_display}"?`)) return;
+  await DELETE(`/items/selos/${id}`);
+  _selos = _selos.filter(s => s.id !== id);
+  _descSelected.delete(id);
+  renderDescobertas();
+  toast('Editora removida');
+}
+
+async function assignGrupoDescoberta(id, grupoId) {
+  const grupoNum = grupoId ? parseInt(grupoId) : null;
+  // When assigning a group, activate the selo at the same time (one step)
+  const patch = grupoNum ? {grupo: grupoNum, ativo: true} : {grupo: null};
+  await PATCH(`/items/selos/${id}`, patch);
+  const s = _selos.find(s => s.id === id);
+  if (s) {
+    s.grupo = grupoNum ? (_grupos.find(g => g.id === grupoNum) || null) : null;
+    if (grupoNum) s.ativo = true;
+  }
+  renderDescobertas();
+  renderWorld();
+  loadPublisherChecks();
+  toast(grupoNum ? 'Editora ativada e atribuída ao grupo' : 'Grupo removido');
+}
+
+// ── DRAG & DROP ────────────────────────────────────────────────────────────────
+let _dragSeloId = null;
+let _dragIsDesc = false; // true when dragging from descobertas
+let _pendingA = null, _pendingB = null;
+let _scrollRaf = null;
+
+// Auto-scroll when dragging near top or bottom edge
+document.addEventListener('dragover', e => {
+  const ZONE = 120, MAX_SPEED = 18;
+  const y = e.clientY, h = window.innerHeight;
+  let speed = 0;
+  if (y < ZONE)      speed = -MAX_SPEED * (1 - y / ZONE);
+  else if (y > h - ZONE) speed =  MAX_SPEED * (1 - (h - y) / ZONE);
+  if (_scrollRaf) cancelAnimationFrame(_scrollRaf);
+  if (speed !== 0) {
+    const step = () => { window.scrollBy(0, speed); _scrollRaf = requestAnimationFrame(step); };
+    _scrollRaf = requestAnimationFrame(step);
+  }
+});
+document.addEventListener('dragend', () => {
+  if (_scrollRaf) { cancelAnimationFrame(_scrollRaf); _scrollRaf = null; }
+});
+
+function onDragStart(event, id) {
+  _dragSeloId = id;
+  _dragIsDesc = false;
+  event.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => document.getElementById(`stag-${id}`)?.classList.add('dragging'), 0);
+}
+
+function onDescDragStart(event, id) {
+  _dragSeloId = id;
+  _dragIsDesc = true;
+  event.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => document.getElementById(`desc-${id}`)?.classList.add('dragging'), 0);
+}
+
+function onDragEnd() {
+  document.querySelectorAll('.dragging,.drag-over,.drop-target')
+    .forEach(el => el.classList.remove('dragging','drag-over','drop-target'));
+  _dragSeloId = null;
+}
+
+// Drop into island → assign to group
+function onIslandOver(event, grupoId) {
+  event.preventDefault(); event.stopPropagation();
+  document.getElementById(`island-${grupoId}`)?.classList.add('drag-over');
+}
+function onIslandLeave(event) {
+  if (!event.currentTarget.contains(event.relatedTarget))
+    event.currentTarget.classList.remove('drag-over');
+}
+async function onIslandDrop(event, grupoId) {
+  event.preventDefault(); event.stopPropagation();
+  const dragId = _dragSeloId;
+  const isDesc = _dragIsDesc;
+  onDragEnd();
+  if (!dragId) return;
+  const s = _selos.find(s => s.id === dragId);
+  const g = _grupos.find(g => g.id === grupoId);
+  if (!s || !g) return;
+  if (!isDesc && s.grupo?.id === grupoId) return;
+  // If from descobertas: activate + assign in one step
+  const patch = isDesc ? {ativo: true, grupo: grupoId} : {grupo: grupoId};
+  await PATCH(`/items/selos/${s.id}`, patch);
+  if (isDesc) s.ativo = true;
+  s.grupo = g;
+  renderWorld(); loadPublisherChecks();
+  toast(`${s.nome_display} → ${g.nome}${isDesc ? ' (ativado)' : ''}`);
+}
+
+// Drop onto standalone tag → offer to create group
+function onTagOver(event, targetId) {
+  if (!_dragSeloId || _dragSeloId === targetId) return;
+  event.preventDefault(); event.stopPropagation();
+  document.getElementById(`stag-${targetId}`)?.classList.add('drop-target');
+}
+function onTagLeave(event) {
+  event.currentTarget.classList.remove('drop-target');
+}
+function onTagDrop(event, targetId) {
+  event.preventDefault(); event.stopPropagation();
+  const dragId = _dragSeloId;
+  onDragEnd();
+  if (!dragId || dragId === targetId) return;
+  _pendingA = _selos.find(s => s.id === dragId);
+  _pendingB = _selos.find(s => s.id === targetId);
+  if (!_pendingA || !_pendingB) return;
+  document.getElementById('popup-desc').textContent =
+    `${_pendingA.nome_display}  +  ${_pendingB.nome_display}`;
+  document.getElementById('popup-nome').value = '';
+  document.getElementById('popup-adb').value  = '';
+  document.getElementById('create-group-popup').style.display = 'flex';
+  setTimeout(() => document.getElementById('popup-nome').focus(), 50);
+}
+
+// Drop onto world → make independent
+function onWorldDragOver(event) { event.preventDefault(); }
+async function onWorldDrop(event) {
+  const dragId = _dragSeloId;
+  onDragEnd();
+  if (!dragId) return;
+  const s = _selos.find(s => s.id === dragId);
+  if (!s || isIndependent(s)) return;
+  await PATCH(`/items/selos/${s.id}`, {grupo: null});
+  s.grupo = null;
+  renderWorld(); loadPublisherChecks();
+  toast(`${s.nome_display} → independente`);
+}
+
+async function confirmCreateGroup() {
+  const nome = document.getElementById('popup-nome').value.trim();
+  const cor  = document.getElementById('popup-cor').value;
+  const adb  = document.getElementById('popup-adb').value.trim();
+  if (!nome) { document.getElementById('popup-nome').focus(); return; }
+  const res = await POST('/items/grupos_editoriais', {nome, cor, ativo: true, adb_name_metabooks: adb||null});
+  if (!res?.data) return;
+  const novoGrupo = res.data;
+  _grupos.push(novoGrupo);
+  await Promise.all([
+    PATCH(`/items/selos/${_pendingA.id}`, {grupo: novoGrupo.id}),
+    PATCH(`/items/selos/${_pendingB.id}`, {grupo: novoGrupo.id})
+  ]);
+  _pendingA.grupo = _pendingB.grupo = novoGrupo;
+  document.getElementById('create-group-popup').style.display = 'none';
+  _pendingA = _pendingB = null;
+  renderWorld(); loadPublisherChecks();
+  toast(`Grupo "${nome}" criado`);
+}
+
+function cancelCreateGroup() {
+  document.getElementById('create-group-popup').style.display = 'none';
+  _pendingA = _pendingB = null;
+}
+
+async function toggleSelo(id, ativo) {
+  await PATCH(`/items/selos/${id}`, {ativo: !ativo});
+  const s = _selos.find(s => s.id === id);
+  if (s) s.ativo = !ativo;
+  renderWorld(); loadPublisherChecks();
+  toast(ativo ? 'Desativado' : 'Ativado');
+}
+
+async function addSelo() {
+  const nome  = document.getElementById('new-selo-nome').value.trim();
+  const mbid  = document.getElementById('new-selo-mbid').value.trim();
+  const grupo = document.getElementById('new-selo-grupo').value;
+  if (!nome) { toast('Nome obrigatório'); return; }
+  await POST('/items/selos', {
+    nome_display: nome, search_metabooks: nome,
+    publisher_mb_id: mbid||null, grupo: grupo||null, ativo: true
+  });
+  document.getElementById('new-selo-nome').value = '';
+  document.getElementById('new-selo-mbid').value = '';
+  await loadSelos();
+  toast('Editora adicionada');
+}
+
+async function addGrupo() {
+  const nome = document.getElementById('new-grupo-nome').value.trim();
+  const adb  = document.getElementById('new-grupo-adb').value.trim();
+  const cor  = document.getElementById('new-grupo-cor').value;
+  if (!nome) { toast('Nome obrigatório'); return; }
+  const res = await POST('/items/grupos_editoriais', {nome, cor, ativo: true, adb_name_metabooks: adb||null});
+  if (!res?.data) return;
+  _grupos.push(res.data);
+  document.getElementById('new-grupo-nome').value = '';
+  document.getElementById('new-grupo-adb').value  = '';
+  renderWorld();
+  toast('Grupo criado');
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  const [total, semSinopse, semCapa, porEditora] = await Promise.all([
+    GET('/items/biblioteca?aggregate[count]=id&limit=1'),
+    GET('/items/biblioteca?filter[sinopse][_null]=true&aggregate[count]=id&limit=1'),
+    GET('/items/biblioteca?filter[capa_url][_null]=true&aggregate[count]=id&limit=1'),
+    GET('/items/biblioteca?groupBy[]=editora&aggregate[count]=id&sort[]=-count(id)&limit=30'),
+  ]);
+
+  const tot = total?.data?.[0]?.count?.id || 0;
+  const sSin = semSinopse?.data?.[0]?.count?.id || 0;
+  const sCap = semCapa?.data?.[0]?.count?.id || 0;
+  const ativos = _selos.filter(s => s.ativo).length;
+
+  document.getElementById('stat-total').textContent   = Number(tot).toLocaleString('pt-BR');
+  document.getElementById('stat-selos').textContent   = ativos;
+  document.getElementById('stat-sinopse').textContent = Math.round((tot - sSin) / tot * 100) + '%';
+  document.getElementById('stat-capa').textContent    = Math.round((tot - sCap) / tot * 100) + '%';
+
+  // barras por editora
+  const rows = porEditora?.data || [];
+  const max = Math.max(...rows.map(r => r.count.id));
+  document.getElementById('bars-editora').innerHTML = rows.map(r => `
+    <div class="publisher-bar">
+      <div class="publisher-bar-label">
+        <span>${r.editora || '(sem editora)'}</span>
+        <span style="color:var(--muted)">${Number(r.count.id).toLocaleString('pt-BR')}</span>
+      </div>
+      <div class="publisher-bar-track">
+        <div class="publisher-bar-fill" style="width:${Math.round(r.count.id/max*100)}%"></div>
+      </div>
+    </div>`).join('');
+
+  // barras por grupo
+  const grupoCounts = {};
+  for (const s of _selos) {
+    const gNome = s.grupo?.nome || 'Sem grupo';
+    const row = rows.find(r => r.editora === s.nome_display || r.editora === s.search_metabooks);
+    grupoCounts[gNome] = (grupoCounts[gNome] || 0) + (row?.count?.id || 0);
+  }
+  const gEntries = Object.entries(grupoCounts).sort((a,b) => b[1]-a[1]);
+  const gMax = Math.max(...gEntries.map(e => e[1]));
+  document.getElementById('bars-grupo').innerHTML = gEntries.map(([nome, cnt]) => `
+    <div class="publisher-bar">
+      <div class="publisher-bar-label">
+        <span>${nome}</span>
+        <span style="color:var(--muted)">${Number(cnt).toLocaleString('pt-BR')}</span>
+      </div>
+      <div class="publisher-bar-track">
+        <div class="publisher-bar-fill" style="width:${gMax?Math.round(cnt/gMax*100):0}%"></div>
+      </div>
+    </div>`).join('');
+}
+
+// ── SYNC ──────────────────────────────────────────────────────────────────────
+async function loadPublisherChecks() {
+  if (!_selos.length) {
+    const se = await GET('/items/selos?sort=nome_display&limit=200&fields=id,nome_display,search_metabooks,ativo,grupo.*');
+    if (se) _selos = se.data;
+  }
+  const el = document.getElementById('publisher-checks');
+  const ativos = _selos.filter(s => s.ativo);
+  el.innerHTML = ativos.map(s => `
+    <label class="publisher-check selected" id="pc-${s.id}">
+      <input type="checkbox" checked value="${s.search_metabooks}" onchange="toggleCheck(this, ${s.id})">
+      <span>${s.nome_display}</span>
+    </label>`).join('');
+}
+
+function toggleCheck(cb, id) {
+  document.getElementById(`pc-${id}`).classList.toggle('selected', cb.checked);
+}
+
+function selectAll(val) {
+  document.querySelectorAll('#publisher-checks input[type=checkbox]').forEach(cb => {
+    cb.checked = val;
+    toggleCheck(cb, cb.closest('.publisher-check').id.replace('pc-',''));
+  });
+}
+
+function onMonthsChange() {}
+
+const GH_REPO              = 'dlameira/livros-wiki';
+const GH_WORKFLOW          = 'sync.yml';
+const GH_WORKFLOW_DISCOVER = 'discover.yml';
+const GH_WORKFLOW_FULLSYNC = 'full_sync.yml';
+
+function saveGhPat(val) {
+  if (val) { localStorage.setItem('gh_pat', val); showGhPatStatus(); }
+}
+
+function showGhPatStatus() {
+  const pat = localStorage.getItem('gh_pat') || '';
+  const el  = document.getElementById('gh-pat-status');
+  const inp = document.getElementById('gh-pat');
+  if (pat) {
+    if (inp) inp.value = pat.slice(0,8) + '••••••••••••••••';
+    if (el)  el.textContent = '✓ salvo';
+  } else {
+    if (el)  el.textContent = 'não configurado';
+  }
+}
+
+async function triggerSync() {
+  const pat = localStorage.getItem('gh_pat');
+  if (!pat) { toast('Configure o GitHub Token primeiro'); return; }
+
+  const months = document.getElementById('months-select').value;
+  const btn    = document.getElementById('sync-btn');
+  const status = document.getElementById('sync-status');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Iniciando...';
+  status.textContent = '';
+
+  // Cria entrada no sync_log para rastrear este run
+  const logRes = await POST('/items/sync_log', {
+    iniciado_em:  new Date().toISOString(),
+    status:       'running',
+    months_back:  Number(months),
+  });
+  const syncLogId = logRes?.data?.id || '';
+
+  // Dispara o workflow no GitHub Actions
+  const r = await fetch(
+    `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${pat}`,
+        'Accept':        'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({
+        ref: 'master',
+        inputs: {
+          months_back: months,
+          sync_log_id: String(syncLogId),
+          publishers: [...document.querySelectorAll('#publisher-checks input:checked')]
+                        .map(cb => cb.value).join(','),
+        }
+      })
+    }
+  );
+
+  btn.disabled = false;
+  btn.innerHTML = '▶ Disparar sync';
+
+  if (r.status === 204) {
+    status.innerHTML = `Rodando no GitHub Actions &nbsp;<a href="https://github.com/${GH_REPO}/actions" target="_blank" style="color:var(--accent)">ver logs →</a>`;
+    toast('Sync iniciado');
+    setTimeout(loadSyncHistory, 3000);
+  } else {
+    const err = await r.text();
+    status.textContent = `Erro ${r.status} — verifique o token`;
+    console.error(err);
+    if (syncLogId) await PATCH(`/items/sync_log/${syncLogId}`, {status: 'error'});
+    toast('Erro ao iniciar sync');
+  }
+}
+
+async function triggerDiscover() {
+  const pat = localStorage.getItem('gh_pat');
+  if (!pat) { toast('Configure o GitHub Token primeiro'); return; }
+
+  const pages  = document.getElementById('discover-pages').value || '500';
+  const minBks = document.getElementById('discover-min').value  || '3';
+  const btn    = document.getElementById('discover-btn');
+  const status = document.getElementById('discover-status');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Iniciando...';
+  status.textContent = '';
+
+  const logRes = await POST('/items/sync_log', {
+    iniciado_em: new Date().toISOString(),
+    status:      'running',
+  });
+  const logId = logRes?.data?.id || '';
+
+  const r = await fetch(
+    `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW_DISCOVER}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${pat}`,
+        'Accept':        'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({
+        ref: 'master',
+        inputs: { sample_pages: pages, min_books: minBks, discover_log_id: String(logId) }
+      })
+    }
+  );
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9740; Descobrir editoras';
+
+  if (r.status === 204) {
+    status.innerHTML = `Rodando &nbsp;<a href="https://github.com/${GH_REPO}/actions" target="_blank" style="color:var(--accent)">ver logs →</a>`;
+    toast('Descoberta iniciada');
+    setTimeout(loadSyncHistory, 3000);
+  } else {
+    status.textContent = `Erro ${r.status} — verifique o token`;
+    if (logId) await PATCH(`/items/sync_log/${logId}`, {status: 'error'});
+    toast('Erro ao iniciar descoberta');
+  }
+}
+
+async function triggerFullSync() {
+  const pat = localStorage.getItem('gh_pat');
+  if (!pat) { toast('Configure o GitHub Token primeiro'); return; }
+
+  const btn    = document.getElementById('full-sync-btn');
+  const status = document.getElementById('full-sync-status');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Iniciando...';
+  status.textContent = '';
+
+  const logRes = await POST('/items/sync_log', {
+    iniciado_em: new Date().toISOString(),
+    status:      'running',
+    tipo:        'full_sync',
+    cancelar:    false,
+  });
+  const logId = logRes?.data?.id || '';
+
+  const r = await fetch(
+    `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW_FULLSYNC}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${pat}`,
+        'Accept':        'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({ ref: 'master', inputs: { sync_log_id: String(logId) } })
+    }
+  );
+
+  btn.disabled = false;
+  btn.innerHTML = '&#9654;&#9654; Iniciar sync completo';
+
+  if (r.status === 204) {
+    status.innerHTML = `Rodando &nbsp;<a href="https://github.com/${GH_REPO}/actions" target="_blank" style="color:var(--accent)">ver logs →</a>`;
+    toast('Sync completo iniciado');
+    setTimeout(loadSyncHistory, 3000);
+  } else {
+    status.textContent = `Erro ${r.status} — verifique o token`;
+    if (logId) await PATCH(`/items/sync_log/${logId}`, {status: 'error'});
+    toast('Erro ao iniciar sync completo');
+  }
+}
+
+async function resumeFullSync(syncLogId) {
+  const pat = localStorage.getItem('gh_pat');
+  if (!pat) { toast('Configure o GitHub Token primeiro'); return; }
+
+  const r = await fetch(
+    `https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW_FULLSYNC}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${pat}`,
+        'Accept':        'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({ ref: 'master', inputs: { sync_log_id: String(syncLogId) } })
+    }
+  );
+
+  if (r.status === 204) {
+    await PATCH(`/items/sync_log/${syncLogId}`, {status: 'running', cancelar: false});
+    toast('Retomando sync completo...');
+    setTimeout(loadSyncHistory, 3000);
+  } else {
+    toast(`Erro ${r.status} ao retomar`);
+  }
+}
+
+async function stopActiveSync() {
+  const active = _lastActiveRun;
+  if (!active) return;
+  const btn = document.getElementById('sync-stop-btn');
+  btn.disabled = true;
+  btn.textContent = 'Parando...';
+  await PATCH(`/items/sync_log/${active.id}`, {cancelar: true});
+  toast('Sinal de parada enviado — aguarde o próximo checkpoint');
+  btn.disabled = false;
+  btn.innerHTML = '&#9632; Parar';
+}
+
+let _pollTimer = null;
+let _wasActiveRun = false;
+let _lastActiveRun = null;
+
+async function loadSyncHistory() {
+  const r = await GET('/items/sync_log?sort[]=-iniciado_em&limit=15&fields=id,iniciado_em,finalizado_em,status,tipo,editoras,livros_criados,livros_atualizados,total_editoras,editoras_processadas,progresso_msg,months_back,livros_encontrados,pagina_atual,total_paginas,cancelar');
+  if (!r) return;
+  const rows = r.data;
+  const el = document.getElementById('sync-history-wrap');
+  if (!rows.length) { el.innerHTML = '<p style="color:var(--muted);font-size:.85rem">Nenhum sync ainda.</p>'; return; }
+
+  // Auto-marcar "running" sem updates recentes como error (45 min para sync/discover, 6h para full_sync)
+  for (const row of rows) {
+    if (row.status === 'running' && row.iniciado_em) {
+      const ageMin = (Date.now() - new Date(row.iniciado_em)) / 60000;
+      const limit  = row.tipo === 'full_sync' ? 360 : 45;
+      if (ageMin > limit) {
+        PATCH(`/items/sync_log/${row.id}`, {
+          status: 'error',
+          progresso_msg: 'Timeout — workflow encerrado sem atualizar status',
+        });
+        row.status = 'error';
+      }
+    }
+  }
+
+  // Detecta run ativo
+  const active = rows.find(r => r.status === 'running');
+  _lastActiveRun = active || null;
+  const card = document.getElementById('sync-active-card');
+
+  if (active) {
+    card.style.display = 'block';
+    const tipo       = active.tipo || (active.months_back == null && !active.editoras?.length ? 'discover' : 'sync');
+    const isFullSync = tipo === 'full_sync';
+    const isDiscover = tipo === 'discover';
+    const total      = isFullSync ? (active.total_paginas || 0) : (active.total_editoras || 0);
+    const done       = isFullSync ? (active.pagina_atual  || 0) : (active.editoras_processadas || 0);
+    const encontrados = active.livros_encontrados || 0;
+    const hasProgress = total > 0;
+    const pct         = hasProgress ? Math.round(done / total * 100) : 0;
+
+    document.getElementById('sync-prog-fill').style.width = (hasProgress ? pct : 0) + '%';
+    document.getElementById('sync-prog-pct').textContent  = hasProgress ? pct + '%' : '';
+
+    if (isDiscover) {
+      document.getElementById('sync-prog-label').textContent = 'Descobrindo editoras…';
+    } else if (isFullSync) {
+      document.getElementById('sync-prog-label').textContent = hasProgress
+        ? `Página ${done.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')}`
+        : 'Sync completo em andamento…';
+    } else {
+      document.getElementById('sync-prog-label').textContent = hasProgress
+        ? `${done.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} livros`
+        : `${encontrados.toLocaleString('pt-BR')} livros encontrados…`;
+    }
+    document.getElementById('sync-prog-msg').textContent = active.progresso_msg || 'Iniciando...';
+    if (!_pollTimer) _pollTimer = setInterval(loadSyncHistory, 4000);
+    _wasActiveRun = true;
+  } else {
+    card.style.display = 'none';
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+    if (_wasActiveRun) {
+      _wasActiveRun = false;
+      loadSelos();
+    }
+  }
+
+  // Botão de retomar (mostra se há run pausado)
+  const paused = rows.find(r => r.status === 'paused' && r.tipo === 'full_sync');
+  const resumeBtn = document.getElementById('full-sync-resume-btn');
+  if (resumeBtn) {
+    if (paused && !active) {
+      resumeBtn.style.display = '';
+      resumeBtn.onclick = () => resumeFullSync(paused.id);
+      document.getElementById('full-sync-status').textContent =
+        `Pausado na pág. ${paused.pagina_atual || '?'}/${paused.total_paginas || '?'}`;
+    } else {
+      resumeBtn.style.display = 'none';
+    }
+  }
+
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse" class="sync-history">
+    <thead><tr>
+      <th>Data</th><th>Tipo</th><th>Status</th><th>Detalhes</th><th>Criados</th><th>Atualizados</th>
+    </tr></thead>
+    <tbody>${rows.map(row => {
+      const tipo = row.tipo ||
+        (row.months_back == null && !row.editoras?.length ? 'discover' : 'sync');
+      const tipoLabel = {full_sync: 'Full Sync', discover: 'Descoberta', sync: 'Sync'}[tipo] || tipo;
+      const detalhes = tipo === 'full_sync'
+        ? `pág. ${row.pagina_atual ?? '?'}/${row.total_paginas ?? '?'} — ${row.progresso_msg || ''}`
+        : tipo === 'discover'
+        ? (row.progresso_msg || '—')
+        : `${(row.editoras||[]).slice(0,3).join(', ')}${(row.editoras||[]).length>3?' …':''}`;
+      const resumeAction = row.status === 'paused' && tipo === 'full_sync'
+        ? `<button class="btn btn-sm" onclick="resumeFullSync(${row.id})" style="padding:2px 8px;font-size:.75rem;margin-left:6px">&#8635;</button>`
+        : '';
+      return `<tr>
+        <td>${row.iniciado_em ? new Date(row.iniciado_em).toLocaleString('pt-BR') : '—'}</td>
+        <td><span class="badge badge-gray">${tipoLabel}</span></td>
+        <td>${statusBadge(row.status)}${resumeAction}</td>
+        <td style="color:var(--muted);font-size:.78rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${detalhes}</td>
+        <td>${row.livros_criados ?? '—'}</td>
+        <td>${row.livros_atualizados ?? '—'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function statusBadge(s) {
+  const map = {done:'badge-green', concluido:'badge-green', running:'badge-yellow', paused:'badge-gray', error:'badge-red', requested:'badge-gray'};
+  const lbl = {done:'Concluído', concluido:'Concluído', running:'Rodando', paused:'Pausado', error:'Erro', requested:'Agendado'};
+  return `<span class="badge ${map[s]||'badge-gray'}">${lbl[s]||s}</span>`;
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+if (token) showApp();
+</script>
+</body>
+</html>
