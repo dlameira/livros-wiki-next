@@ -25,13 +25,19 @@ export default async function StatsPage() {
   const curadaRes = await fetch(`${DIRECTUS_URL}/items/selos?fields=id,nome_display,grupo&limit=500&filter[curada][_eq]=true`)
   const curadas: Selo[] = (await curadaRes.json()).data || []
 
+  // Treat "Independente" grupo as ungrouped
+  const ignoredGrupos = new Set(['Independente'])
+
   const bubbleData = curadas
     .filter(s => (countByEditora.get(s.nome_display) || 0) > 0)
-    .map(s => ({
-      selo: s.nome_display,
-      grupo: (s.grupo && grupoMap.has(s.grupo)) ? grupoMap.get(s.grupo)! : '',
-      count: countByEditora.get(s.nome_display) || 0,
-    }))
+    .map(s => {
+      const grupoNome = (s.grupo && grupoMap.has(s.grupo)) ? grupoMap.get(s.grupo)! : ''
+      return {
+        selo: s.nome_display,
+        grupo: ignoredGrupos.has(grupoNome) ? '' : grupoNome,
+        count: countByEditora.get(s.nome_display) || 0,
+      }
+    })
     .sort((a, b) => b.count - a.count)
 
   const totalBooks = bubbleData.reduce((sum, d) => sum + d.count, 0)
