@@ -132,26 +132,8 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
     mosaico = (await res.json()).data || []
   }
 
-  // ── Dados para gráficos ────────────────────────────────────────────────────
+  // ── Dados para gráfico ─────────────────────────────────────────────────────
   const monthlyData = await getMonthlyBookCounts(nomesSelos).catch(() => [])
-
-  // Livros do ano atual para o gráfico de timeline
-  let livrosAno: { id: number; titulo: string; editora: string; data_publicacao: string }[] = []
-  if (nomesSelos.length > 0) {
-    const filterAno = encodeURIComponent(JSON.stringify({
-      _and: [
-        { editora: { _in: nomesSelos } },
-        { data_publicacao: { _gte: anoInicioStr } },
-        { data_publicacao: { _lte: prevLimiteStr } },
-      ]
-    }))
-    const anoRes = await fetch(
-      `${DIRECTUS_URL}/items/biblioteca?fields=id,titulo,editora,data_publicacao&sort=data_publicacao&limit=500&filter=${filterAno}`
-    )
-    livrosAno = (await anoRes.json()).data || []
-  }
-
-  const timelineData = livrosAno.map(l => ({ id: l.id, titulo: l.titulo, editora: l.editora, data: l.data_publicacao }))
 
   // Monta array enriquecido para o componente client
   // ativo = calculado dinamicamente (nLanc > 0 || nPrev > 0), não o campo do Directus
@@ -181,28 +163,29 @@ export default async function GrupoPage({ params }: { params: Promise<{ slug: st
       <SiteHeader />
 
       {/* ── HERO ─────────────────────────────────────────── */}
-      <div style={{ padding: '64px 64px 48px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c0392b', marginBottom: '12px' }}>
-              grupo editorial
-            </div>
-            <h1 className="font-serif" style={{ fontSize: '3rem', fontWeight: 'normal', letterSpacing: '0.04em', color: 'var(--text)', lineHeight: 1, marginBottom: '10px' }}>
-              {grupo.nome}
-            </h1>
+      <div style={{
+        padding: '64px 64px 48px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        gap: '32px',
+        flexWrap: 'wrap',
+      }}>
+        <div>
+          <div style={{ fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c0392b', marginBottom: '12px' }}>
+            grupo editorial
           </div>
+          <h1 className="font-serif" style={{ fontSize: '3rem', fontWeight: 'normal', letterSpacing: '0.04em', color: 'var(--text)', lineHeight: 1, marginBottom: '10px' }}>
+            {grupo.nome}
+          </h1>
           {GRUPO_DESCRICAO[grupo.nome] && (
-            <div className="font-serif" style={{ maxWidth: '440px', fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.75, borderLeft: '2px solid var(--border)', paddingLeft: '16px' }}>
+            <div className="font-serif" style={{ marginTop: '16px', maxWidth: '520px', fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.75, borderLeft: '2px solid var(--border)', paddingLeft: '16px' }}>
               {GRUPO_DESCRICAO[grupo.nome]}
             </div>
           )}
         </div>
-        {/* Gráficos horizontais */}
-        <GroupCharts
-          monthlyData={monthlyData}
-          timelineData={timelineData}
-          groupColor={grupo.cor || '#c0392b'}
-        />
+        <GroupCharts monthlyData={monthlyData} groupColor={grupo.cor || '#c0392b'} />
       </div>
 
       {/* ── STATS ────────────────────────────────────────── */}
