@@ -353,8 +353,8 @@ btn, .btn {
     <div id="tab-selos" class="tab-panel active">
       <h2>Editoras</h2>
       <p style="color:var(--muted);font-size:.83rem;margin-bottom:20px">
-        <span class="badge badge-green">ativos</span> entram no sync. &nbsp;
-        <span class="badge badge-gray">inativos</span> não sincronizam. &nbsp;
+        <span class="badge badge-green">curadas</span> entram no sync. &nbsp;
+        <span class="badge badge-gray">não curadas</span> não sincronizam. &nbsp;
         Arraste para dentro de um grupo ou solte duas independentes juntas para criar um novo grupo.
       </p>
 
@@ -385,7 +385,7 @@ btn, .btn {
         </div>
       </div>
 
-      <!-- Descobertas: selos inativos descobertos via Metabooks -->
+      <!-- Descobertas: selos não curadas descobertos via Metabooks -->
       <div id="descobertas-wrap" style="margin-top:8px">
         <div class="descobertas-header" onclick="toggleDescobertas()">
           <h3 style="margin:0">Descobertas</h3>
@@ -417,7 +417,7 @@ btn, .btn {
       <h2>Stats</h2>
       <div class="grid-4" id="stats-top" style="margin-bottom:24px">
         <div class="card stat-box"><span class="val" id="stat-total">—</span><span class="lbl">total de livros</span></div>
-        <div class="card stat-box"><span class="val" id="stat-selos">—</span><span class="lbl">selos ativos</span></div>
+        <div class="card stat-box"><span class="val" id="stat-selos">—</span><span class="lbl">selos curados</span></div>
         <div class="card stat-box"><span class="val" id="stat-sinopse">—</span><span class="lbl">com sinopse</span></div>
         <div class="card stat-box"><span class="val" id="stat-capa">—</span><span class="lbl">com capa</span></div>
       </div>
@@ -663,7 +663,7 @@ async function loadAllSelos() {
   const PAGE = 500;
   let page = 1;
   while (true) {
-    const r = await GET(`/items/selos?sort=nome_display&limit=${PAGE}&page=${page}&fields=id,nome_display,search_metabooks,publisher_mb_id,ativo,grupo.*,total_livros_mb`);
+    const r = await GET(`/items/selos?sort=nome_display&limit=${PAGE}&page=${page}&fields=id,nome_display,search_metabooks,publisher_mb_id,curada,grupo.*,total_livros_mb`);
     if (!r?.data?.length) break;
     all.push(...r.data);
     if (r.data.length < PAGE) break;
@@ -710,7 +710,7 @@ function renderWorld() {
   }).join('');
 
   // Standalone: active selos without a real group
-  const standalone = _selos.filter(s => isIndependent(s) && s.ativo).map(s => seloTagHtml(s, true)).join('');
+  const standalone = _selos.filter(s => isIndependent(s) && s.curada).map(s => seloTagHtml(s, true)).join('');
 
   world.innerHTML = islands + standalone;
   renderDescobertas();
@@ -731,14 +731,14 @@ function seloTagHtml(s, standalone = false) {
        ondragleave="onTagLeave(event)"
        ondrop="onTagDrop(event,${s.id})"`
     : '';
-  return `<div class="selo-tag ${s.ativo?'':'inativo'}" id="stag-${s.id}"
+  return `<div class="selo-tag ${s.curada?'':'inativo'}" id="stag-${s.id}"
     draggable="true"
     title="VL=${s.search_metabooks||'—'}${s.publisher_mb_id?' · '+s.publisher_mb_id:''}"
     ondragstart="onDragStart(event,${s.id})"
     ondragend="onDragEnd()"
     ${extraDrop}>
     <span>${s.nome_display}</span>
-    <button class="toggle-selo" onclick="event.stopPropagation();toggleSelo(${s.id},${s.ativo})">${s.ativo?'●':'○'}</button>
+    <button class="toggle-selo" onclick="event.stopPropagation();toggleSelo(${s.id},${s.curada})">${s.curada?'●':'○'}</button>
   </div>`;
 }
 
@@ -783,7 +783,7 @@ async function deleteGrupo(id) {
 let _descSelected = new Set(); // IDs selecionados
 
 function getDescInativos() {
-  return _selos.filter(s => !s.ativo);
+  return _selos.filter(s => !s.curada);
 }
 
 function renderDescobertas() {
@@ -883,10 +883,10 @@ async function activateSelected() {
   btn.textContent = 'ativando…';
   // Batch in groups of 10
   for (let i = 0; i < ids.length; i += 10) {
-    await Promise.all(ids.slice(i, i + 10).map(id => PATCH(`/items/selos/${id}`, {ativo: true})));
+    await Promise.all(ids.slice(i, i + 10).map(id => PATCH(`/items/selos/${id}`, {curada: true})));
     ids.slice(i, i + 10).forEach(id => {
       const s = _selos.find(s => s.id === id);
-      if (s) s.ativo = true;
+      if (s) s.curada = true;
     });
   }
   _descSelected.clear();
@@ -904,9 +904,9 @@ function toggleDescobertas() {
 }
 
 async function activateDescoberta(id) {
-  await PATCH(`/items/selos/${id}`, {ativo: true});
+  await PATCH(`/items/selos/${id}`, {curada: true});
   const s = _selos.find(s => s.id === id);
-  if (s) s.ativo = true;
+  if (s) s.curada = true;
   _descSelected.delete(id);
   renderWorld();
   loadPublisherChecks();
@@ -926,12 +926,12 @@ async function deleteDescoberta(id) {
 async function assignGrupoDescoberta(id, grupoId) {
   const grupoNum = grupoId ? parseInt(grupoId) : null;
   // When assigning a group, activate the selo at the same time (one step)
-  const patch = grupoNum ? {grupo: grupoNum, ativo: true} : {grupo: null};
+  const patch = grupoNum ? {grupo: grupoNum, curada: true} : {grupo: null};
   await PATCH(`/items/selos/${id}`, patch);
   const s = _selos.find(s => s.id === id);
   if (s) {
     s.grupo = grupoNum ? (_grupos.find(g => g.id === grupoNum) || null) : null;
-    if (grupoNum) s.ativo = true;
+    if (grupoNum) s.curada = true;
   }
   renderDescobertas();
   renderWorld();
@@ -1002,9 +1002,9 @@ async function onIslandDrop(event, grupoId) {
   if (!s || !g) return;
   if (!isDesc && s.grupo?.id === grupoId) return;
   // If from descobertas: activate + assign in one step
-  const patch = isDesc ? {ativo: true, grupo: grupoId} : {grupo: grupoId};
+  const patch = isDesc ? {curada: true, grupo: grupoId} : {grupo: grupoId};
   await PATCH(`/items/selos/${s.id}`, patch);
-  if (isDesc) s.ativo = true;
+  if (isDesc) s.curada = true;
   s.grupo = g;
   renderWorld(); loadPublisherChecks();
   toast(`${s.nome_display} → ${g.nome}${isDesc ? ' (ativado)' : ''}`);
@@ -1074,12 +1074,12 @@ function cancelCreateGroup() {
   _pendingA = _pendingB = null;
 }
 
-async function toggleSelo(id, ativo) {
-  await PATCH(`/items/selos/${id}`, {ativo: !ativo});
+async function toggleSelo(id, curada) {
+  await PATCH(`/items/selos/${id}`, {curada: !curada});
   const s = _selos.find(s => s.id === id);
-  if (s) s.ativo = !ativo;
+  if (s) s.curada = !curada;
   renderWorld(); loadPublisherChecks();
-  toast(ativo ? 'Desativado' : 'Ativado');
+  toast(curada ? 'Desativado' : 'Ativado');
 }
 
 async function addSelo() {
@@ -1089,7 +1089,7 @@ async function addSelo() {
   if (!nome) { toast('Nome obrigatório'); return; }
   await POST('/items/selos', {
     nome_display: nome, search_metabooks: nome,
-    publisher_mb_id: mbid||null, grupo: grupo||null, ativo: true
+    publisher_mb_id: mbid||null, grupo: grupo||null, curada: true
   });
   document.getElementById('new-selo-nome').value = '';
   document.getElementById('new-selo-mbid').value = '';
@@ -1123,10 +1123,10 @@ async function loadStats() {
   const tot = total?.data?.[0]?.count?.id || 0;
   const sSin = semSinopse?.data?.[0]?.count?.id || 0;
   const sCap = semCapa?.data?.[0]?.count?.id || 0;
-  const ativos = _selos.filter(s => s.ativo).length;
+  const curadas = _selos.filter(s => s.curada).length;
 
   document.getElementById('stat-total').textContent   = Number(tot).toLocaleString('pt-BR');
-  document.getElementById('stat-selos').textContent   = ativos;
+  document.getElementById('stat-selos').textContent   = curadas;
   document.getElementById('stat-sinopse').textContent = Math.round((tot - sSin) / tot * 100) + '%';
   document.getElementById('stat-capa').textContent    = Math.round((tot - sCap) / tot * 100) + '%';
 
@@ -1168,12 +1168,12 @@ async function loadStats() {
 // ── SYNC ──────────────────────────────────────────────────────────────────────
 async function loadPublisherChecks() {
   if (!_selos.length) {
-    const se = await GET('/items/selos?sort=nome_display&limit=200&fields=id,nome_display,search_metabooks,ativo,grupo.*');
+    const se = await GET('/items/selos?sort=nome_display&limit=200&fields=id,nome_display,search_metabooks,curada,grupo.*');
     if (se) _selos = se.data;
   }
   const el = document.getElementById('publisher-checks');
-  const ativos = _selos.filter(s => s.ativo);
-  el.innerHTML = ativos.map(s => `
+  const curadas = _selos.filter(s => s.curada);
+  el.innerHTML = curadas.map(s => `
     <label class="publisher-check selected" id="pc-${s.id}">
       <input type="checkbox" checked value="${s.search_metabooks}" onchange="toggleCheck(this, ${s.id})">
       <span>${s.nome_display}</span>
@@ -1435,7 +1435,7 @@ async function loadSyncHistory() {
     }
   }
 
-  // Detecta run ativo
+  // Detecta run curada
   const active = rows.find(r => r.status === 'running');
   _lastActiveRun = active || null;
   const card = document.getElementById('sync-active-card');
