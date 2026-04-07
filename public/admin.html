@@ -706,24 +706,36 @@ let _openGrupoId = null;
 function renderWorld() {
   const world = document.getElementById('editoras-world');
 
+  const GRUPO_COR = '#f2bfd8';
+
   // Groups as chips
-  const chips = _grupos.filter(g => g.nome !== IND_NOME).map(g => {
+  const grupoItems = _grupos.filter(g => g.nome !== IND_NOME).map(g => {
     const count = _selos.filter(s => s.grupo?.id === g.id).length;
     const isActive = _openGrupoId === g.id;
-    return `<div class="grupo-chip${isActive ? ' active' : ''}" id="island-${g.id}"
-         style="border-color:${g.cor||'#888'};color:${g.cor||'#888'}"
-         onclick="openGrupoPanel(${g.id})"
-         ondragover="onIslandOver(event,${g.id})"
-         ondragleave="onIslandLeave(event)"
-         ondrop="onIslandDrop(event,${g.id})">
-      ${g.nome}<span class="grupo-chip-count">${count}</span>
-    </div>`;
-  }).join('');
+    return {
+      nome: g.nome,
+      html: `<div class="grupo-chip${isActive ? ' active' : ''}" id="island-${g.id}"
+           style="border-color:${GRUPO_COR};color:${GRUPO_COR}"
+           onclick="openGrupoPanel(${g.id})"
+           ondragover="onIslandOver(event,${g.id})"
+           ondragleave="onIslandLeave(event)"
+           ondrop="onIslandDrop(event,${g.id})">
+        ${g.nome}<span class="grupo-chip-count">${count}</span>
+      </div>`
+    };
+  });
 
   // Standalone: curated selos without a real group
-  const standalone = _selos.filter(s => isIndependent(s) && s.curada).map(s => seloTagHtml(s, true)).join('');
+  const seloItems = _selos.filter(s => isIndependent(s) && s.curada).map(s => ({
+    nome: s.nome_display,
+    html: seloTagHtml(s, true)
+  }));
 
-  world.innerHTML = chips + standalone;
+  // Merge and sort alphabetically
+  const allItems = [...grupoItems, ...seloItems]
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+  world.innerHTML = allItems.map(i => i.html).join('');
 
   // Contagem: cada grupo conta como 1, cada editora independente curada conta como 1
   const gruposComSelos = _grupos.filter(g => g.nome !== IND_NOME && _selos.some(s => s.grupo?.id === g.id)).length;
