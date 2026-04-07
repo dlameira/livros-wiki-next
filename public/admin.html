@@ -692,7 +692,7 @@ async function loadAllSelos() {
   const PAGE = 500;
   let page = 1;
   while (true) {
-    const r = await GET(`/items/selos?sort=nome_display&limit=${PAGE}&page=${page}&fields=id,nome_display,search_metabooks,publisher_mb_id,curada,grupo.*,total_livros_mb`);
+    const r = await GET(`/items/selos?sort=nome_display&limit=${PAGE}&page=${page}&fields=id,nome_display,nome_curto,search_metabooks,publisher_mb_id,curada,grupo.*,total_livros_mb`);
     if (!r?.data?.length) break;
     all.push(...r.data);
     if (r.data.length < PAGE) break;
@@ -727,7 +727,7 @@ function renderWorld() {
 
   // Standalone: curated selos without a real group
   const seloItems = _selos.filter(s => isIndependent(s) && s.curada).map(s => ({
-    nome: s.nome_display,
+    nome: s.nome_curto || s.nome_display,
     html: seloTagHtml(s, true)
   }));
 
@@ -828,7 +828,7 @@ function seloTagHtml(s, standalone = false) {
     ondragstart="onDragStart(event,${s.id})"
     ondragend="onDragEnd()"
     ${extraDrop}>
-    <span>${s.nome_display}</span>
+    <span title="${s.nome_display}">${s.nome_curto || s.nome_display}</span>
     <button class="toggle-selo" onclick="event.stopPropagation();toggleSelo(${s.id},${s.curada})">${s.curada?'●':'○'}</button>
   </div>`;
 }

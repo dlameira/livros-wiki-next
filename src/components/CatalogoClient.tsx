@@ -301,7 +301,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   const anoAtual = hoje.getFullYear()
   const years = Array.from({ length: anoAtual + 3 - 1980 }, (_, i) => 1980 + i)
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  const selosFiltrados = epSearch.trim() ? selos.filter(s => normalize(s.nome_display ?? '').includes(normalize(epSearch))) : selos
+  const selosFiltrados = epSearch.trim() ? selos.filter(s => normalize(s.nome_curto || s.nome_display || '').includes(normalize(epSearch)) || normalize(s.nome_display ?? '').includes(normalize(epSearch))) : selos
   const selosPorGrupo  = grupos.map(g => ({ grupo: g, selos: selosFiltrados.filter(s => s.grupo?.nome === g.nome) })).filter(g => g.selos.length > 0)
   const selosSemGrupo  = selosFiltrados.filter(s => !s.grupo || s.grupo.nome === 'Independente')
   const selAdicionadas = selos.filter(s => selectedEditoras.has(s.nome_display))
@@ -309,7 +309,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
   // Lista plana e ordenada alfabeticamente
   const itensEditoras: ({ type: 'grupo'; nome: string; grupo: typeof grupos[0]; selos: typeof selos } | { type: 'selo'; nome: string; selo: typeof selos[0] })[] = [
     ...selosPorGrupo.map(({ grupo, selos: sl }) => ({ type: 'grupo' as const, nome: grupo.nome, grupo, selos: sl })),
-    ...selosSemGrupo.map(s => ({ type: 'selo' as const, nome: s.nome_display, selo: s })),
+    ...selosSemGrupo.map(s => ({ type: 'selo' as const, nome: s.nome_curto || s.nome_display, selo: s })),
   ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
 
   const gridMinMax     = gridSize === 'compacta' ? '90px' : gridSize === 'grande' ? '160px' : '120px'
@@ -369,7 +369,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
         <span style={{ fontSize:'0.78rem', color:'var(--muted)' }}>editoras</span>
         {selAdicionadas.map(s => (
           <span key={s.nome_display} style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px 4px 12px', borderRadius:20, border:'1px solid var(--border)', background:'var(--surface)', fontSize:'0.75rem', color:'var(--text)' }}>
-            {s.nome_display}
+            {s.nome_curto || s.nome_display}
             <span onClick={() => toggleEditora(s.nome_display)} style={{ cursor:'pointer', color:'var(--muted)', fontSize:'1rem', lineHeight:1 }}>×</span>
           </span>
         ))}
@@ -508,7 +508,7 @@ export default function CatalogoClient({ livros: initialLivros, totalCount: init
                       background:  selectedEditoras.has(s.nome_display) ? 'rgba(251,242,54,0.12)' : 'transparent',
                     }}>
                       {selectedEditoras.has(s.nome_display) && <span style={{ fontSize:'0.6rem' }}>✓</span>}
-                      {s.nome_display}
+                      {s.nome_curto || s.nome_display}
                     </button>
                   )
                 })}

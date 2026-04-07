@@ -15,6 +15,7 @@ export type Livro = {
 
 export type Selo = {
   nome_display: string
+  nome_curto?: string | null
   grupo: { nome: string; cor: string } | null
 }
 
@@ -27,7 +28,7 @@ async function getInitialData() {
   // Busca selos curados com grupo aninhado
   const CAMPO_CURADORIA = 'curada'
   const selosRes = await fetch(
-    `${DIRECTUS_URL}/items/selos?fields=nome_display,grupo.nome,grupo.cor&limit=500&filter[${CAMPO_CURADORIA}][_eq]=true`,
+    `${DIRECTUS_URL}/items/selos?fields=nome_display,nome_curto,grupo.nome,grupo.cor&limit=500&filter[${CAMPO_CURADORIA}][_eq]=true`,
     { cache: 'no-store' }
   )
   const selosJson = await selosRes.json()
