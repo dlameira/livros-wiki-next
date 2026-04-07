@@ -13,7 +13,7 @@ type Contributor = { type: string; firstName?: string; lastName?: string; groupN
 
 function formatDate(s: string | Date) {
   if (!s) return ''
-  const d = s instanceof Date ? s : new Date(s + 'T12:00:00')
+  const d = s instanceof Date ? s : new Date(String(s).includes('T') ? s : s + 'T12:00:00')
   if (isNaN(d.getTime())) return ''
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
 }
