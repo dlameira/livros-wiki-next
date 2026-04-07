@@ -64,10 +64,11 @@ export default function BubbleViz({ data }: Props) {
     if (!container || !svgEl || !data.length) return
     simRef.current?.stop()
 
-    const width = container.clientWidth
+    const width = Math.floor(container.clientWidth / 3)
     const height = Math.max(200, Math.min(350, (window.innerHeight - 180) / 2))
     svgEl.setAttribute('width', String(width))
     svgEl.setAttribute('height', String(height))
+    svgEl.style.margin = '0 auto'
     const svg = d3.select(svgEl)
     svg.selectAll('*').remove()
 
