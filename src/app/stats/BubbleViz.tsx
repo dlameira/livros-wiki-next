@@ -132,9 +132,9 @@ export default function BubbleViz({ data }: Props) {
           tooltip.style.top = `${event.clientY - rect.top - 60}px`
         }
       })
-      .on('mouseleave', (event) => {
+      .on('mouseleave', (event, d) => {
         d3.select(event.currentTarget)
-          .attr('opacity', d => selectedGrupo && d.grupo !== selectedGrupo ? 0.15 : 0.75)
+          .attr('opacity', selectedGrupo && d.grupo !== selectedGrupo ? 0.15 : 0.75)
           .attr('stroke', 'none')
         if (tooltip) tooltip.style.opacity = '0'
       })
