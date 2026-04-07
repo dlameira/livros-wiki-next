@@ -1,0 +1,66 @@
+import { DIRECTUS_URL } from '@/lib/directus'
+import SiteHeader from '@/components/SiteHeader'
+import BubbleViz from './BubbleViz'
+
+export const dynamic = 'force-dynamic'
+
+type Grupo = { id: number; nome: string }
+type Selo = { id: number; nome_display: string; grupo: number }
+
+export default async function StatsPage() {
+  const [gruposRes, selosRes] = await Promise.all([
+    fetch(`${DIRECTUS_URL}/items/grupos_editoriais?fields=id,nome&limit=50`),
+    fetch(`${DIRECTUS_URL}/items/selos?fields=id,nome_display,grupo&limit=500`),
+  ])
+
+  const grupos: Grupo[] = (await gruposRes.json()).data || []
+  const selos: Selo[] = (await selosRes.json()).data || []
+
+  // Count books per selo in parallel
+  const counts = await Promise.all(
+    selos.map(async (selo) => {
+      const filter = encodeURIComponent(JSON.stringify({ editora: { _eq: selo.nome_display } }))
+      const res = await fetch(`${DIRECTUS_URL}/items/biblioteca?limit=0&meta=filter_count&filter=${filter}`)
+      const j = await res.json()
+      return { seloId: selo.id, count: j.meta?.filter_count || 0 }
+    })
+  )
+
+  const countMap = new Map(counts.map(c => [c.seloId, c.count]))
+  const grupoMap = new Map(grupos.map(g => [g.id, g.nome]))
+
+  const bubbleData = selos
+    .filter(s => (countMap.get(s.id) || 0) > 0)
+    .map(s => ({
+      selo: s.nome_display,
+      grupo: grupoMap.get(s.grupo) || 'Outros',
+      count: countMap.get(s.id) || 0,
+    }))
+    .sort((a, b) => b.count - a.count)
+
+  const totalBooks = bubbleData.reduce((sum, d) => sum + d.count, 0)
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+      <SiteHeader subtitle="stats" />
+
+      <div style={{ padding: '48px 64px 24px' }}>
+        <div style={{ fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+          catálogo por grupo editorial
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
+          <span className="font-serif" style={{ fontSize: '2rem', color: 'var(--text)', fontWeight: 'normal' }}>
+            {totalBooks.toLocaleString('pt-BR')} livros
+          </span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+            {bubbleData.length} selos · {grupos.length} grupos
+          </span>
+        </div>
+      </div>
+
+      <div style={{ padding: '0 32px 64px' }}>
+        <BubbleViz data={bubbleData} />
+      </div>
+    </div>
+  )
+}
