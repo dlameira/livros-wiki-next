@@ -167,28 +167,48 @@ export default function BubbleViz({ data }: Props) {
       .attr('font-weight', 500)
       .text(d => { const m = Math.floor(d.r / 3); return d.selo.length > m ? d.selo.substring(0, m) + '…' : d.selo })
 
-    // Wiggle force — stronger for visible movement
+    // Moving cluster centers — groups drift around their base position
+    const baseCenters = { ...clusterCenters }
     let tick = 0
-    function wiggleForce() {
+    const drift = 30 // pixels of drift range
+
+    function movingClusterForce() {
       return () => {
         tick++
-        const t = tick * 0.004
+        const t = tick * 0.002
+        // Move each group's target position in a slow orbit
+        for (const g of namedGrupos) {
+          const base = baseCenters[g]
+          if (!base) continue
+          const phase = hash(g) * 0.01
+          clusterCenters[g] = {
+            x: base.x + Math.sin(t + phase) * drift,
+            y: base.y + Math.cos(t * 0.7 + phase) * drift,
+          }
+        }
+        // Pull nodes toward their (moving) cluster center
         for (const n of nodes) {
-          n.vx! += Math.sin(t + (n.index || 0) * 0.7) * 0.06
-          n.vy! += Math.cos(t * 0.5 + (n.index || 0) * 0.5) * 0.05
+          if (!n.grupo) continue
+          const c = clusterCenters[n.grupo]
+          if (!c) continue
+          n.vx! += (c.x - n.x!) * 0.04
+          n.vy! += (c.y - n.y!) * 0.04
+        }
+        // Independents: gentle random drift
+        for (const n of nodes) {
+          if (n.grupo) continue
+          n.vx! += Math.sin(t + (n.index || 0) * 0.6) * 0.08
+          n.vy! += Math.cos(t * 0.5 + (n.index || 0) * 0.4) * 0.06
         }
       }
     }
 
-    // Simulation: grouped nodes pull toward cluster, independents just collide
     const sim = d3.forceSimulation<SimNode>(nodes)
-      .force('x', d3.forceX<SimNode>(d => d.grupo ? (clusterCenters[d.grupo]?.x || width / 2) : width / 2).strength(d => d.grupo ? 0.25 : 0.005))
-      .force('y', d3.forceY<SimNode>(d => d.grupo ? (clusterCenters[d.grupo]?.y || height / 2) : height / 2).strength(d => d.grupo ? 0.25 : 0.005))
       .force('collide', d3.forceCollide<SimNode>(d => d.r + 1.5).strength(1).iterations(8))
-      .force('wiggle', wiggleForce())
-      .alphaTarget(0.012)
+      .force('drift', movingClusterForce())
+      .alphaTarget(0.02)
       .alphaDecay(0)
-      .velocityDecay(0.45)
+      .velocityDecay(0.5)
 
     simRef.current = sim
 
